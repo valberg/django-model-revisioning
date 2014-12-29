@@ -1,0 +1,6 @@
+*.sw*
+db.sqlite3
+.idea/
+django_doc_brown.egg-info/
+__pycache__/
+
