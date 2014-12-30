@@ -34,3 +34,22 @@ def test_revision_on_edit(db):
     foo1.save()
 
     assert foo1.revision_set.count() == 2
+
+
+def test_foreign_keys(db):
+    non_revisioned_instance = models.NonRevisionedModel.objects.create()
+    foo1 = models.Foo.objects.create(
+        non_revisioned_foreign_key=non_revisioned_instance
+    )
+    assert foo1.revision_set.count() == 0
+
+    foo1.non_revisioned_foreign_key = None
+    foo1.save()
+    assert foo1.revision_set.count() == 1
+
+    revision1 = foo1.revision_set.first()
+    assert revision1.non_revisioned_foreign_key == non_revisioned_instance
+
+    non_revisioned_instance.delete()
+
+    assert foo1.revision_set.count() == 1

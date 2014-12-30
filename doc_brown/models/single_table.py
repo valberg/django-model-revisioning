@@ -1,10 +1,46 @@
 import difflib
+from django.core import serializers
 
 from django.db import models
-from . querysets import RevisionQuerySet
+from django.db.models.base import ModelBase
+from django.utils import six
+from ..querysets import RevisionQuerySet
 
 
-class RevisionModel(models.Model):
+def revision_on_delete(collector, field, sub_objs, using):
+    serialized = serializers.serialize('json',
+                                       [getattr(sub_objs[0], field.name)])
+
+    for obj in sub_objs:
+        setattr(obj, field.name, None)
+        setattr(obj, field.name + '_serialized', serialized)
+        obj.save()
+
+
+class RevisionBase(ModelBase):
+
+    def __new__(cls, name, bases, attrs):
+        model = super(RevisionBase, cls).__new__(cls, name, bases, attrs)
+
+        for b in bases:
+            if b.__name__ == 'RevisionSingleTableModel':
+                for field in model._meta.fields:
+                    exluded_field_names = model._get_excluded_field_names(model)
+                    if type(field) == models.ForeignKey and\
+                            field.name not in exluded_field_names:
+                        field.null = True
+                        field.blank = True
+                        field.rel.on_delete = revision_on_delete
+                        new_field_name = field.name + '_serialized'
+                        model.add_to_class(new_field_name,
+                                           models.TextField(new_field_name,
+                                                            null=True,
+                                                            blank=True))
+
+        return model
+
+
+class RevisionSingleTableModel(six.with_metaclass(RevisionBase, models.Model)):
     objects = RevisionQuerySet.as_manager()
 
     revision_at = models.DateTimeField(
@@ -128,3 +164,5 @@ class RevisionModel(models.Model):
             if field_diff:
                 output[field.name] = field_diff
         return output
+
+
