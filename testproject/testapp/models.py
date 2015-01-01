@@ -1,12 +1,12 @@
 from django.db import models
-from doc_brown import RevisionSingleTableModel, RevisionTwoTablesModel
+from doc_brown import RevisionedModel
 
 
 class NonRevisionedModel(models.Model):
     char = models.CharField(max_length=255, null=True, blank=True)
 
 
-class Foo(RevisionSingleTableModel):
+class Foo(RevisionedModel):
     char = models.CharField(max_length=255, null=True, blank=True)
     int = models.IntegerField(null=True, blank=True)
     text = models.TextField(null=True, blank=True)
@@ -19,11 +19,14 @@ class Foo(RevisionSingleTableModel):
     non_revisioned_foreign_key = models.ForeignKey(
         'testapp.NonRevisionedModel',
     )
-
     # TODO: Add more field types!
 
+    class Revisions:
+        revision_type = 'single'
+        soft_deletion = True
 
-class Bar(RevisionTwoTablesModel):
+
+class Bar(RevisionedModel):
     char = models.CharField(max_length=255, null=True, blank=True)
     int = models.IntegerField(null=True, blank=True)
     text = models.TextField(null=True, blank=True)
@@ -32,3 +35,6 @@ class Bar(RevisionTwoTablesModel):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True, auto_now=True)
+
+    class Revisions:
+        revision_type = 'double'

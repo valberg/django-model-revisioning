@@ -26,7 +26,7 @@ def test_revision_on_edit(db):
 
     assert foo1.revision_set.count() == 2
 
-    revision2 = revision1.get_next_in_order()
+    revision2 = foo1.revision_set.last()
     assert revision2.text is None
 
     foo1.save()

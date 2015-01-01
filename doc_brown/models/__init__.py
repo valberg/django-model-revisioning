@@ -1,2 +1,0 @@
-from .single_table import RevisionSingleTableModel
-from .two_tables import RevisionTwoTablesModel

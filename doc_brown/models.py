@@ -1,10 +1,12 @@
 import difflib
-from django.core import serializers
+from copy import deepcopy
 
+from django.core import serializers
 from django.db import models
 from django.db.models.base import ModelBase
 from django.utils import six
-from ..querysets import RevisionQuerySet
+
+from .querysets import RevisionQuerySet
 
 
 def revision_on_delete(collector, field, sub_objs, using):
@@ -18,49 +20,79 @@ def revision_on_delete(collector, field, sub_objs, using):
 
 
 class RevisionBase(ModelBase):
+    @classmethod
+    def _create_single_table(mcs, model):
+        model.add_to_class('is_revision', models.BooleanField(default=False))
+        model.add_to_class(
+            'revision_for',
+            models.ForeignKey(
+                'self',
+                null=True,
+                blank=True,
+                related_name='revision_set'
+            )
+        )
+        model.add_to_class(
+            'revision_at',
+            models.DateTimeField(
+                auto_now_add=True
+            )
+        )
 
-    def __new__(cls, name, bases, attrs):
-        model = super(RevisionBase, cls).__new__(cls, name, bases, attrs)
+    @classmethod
+    def _double(mcs, name, bases, attrs, model):
+        super_new = super(RevisionBase, mcs).__new__
+        revision_class = super_new(mcs, name + 'Revision', bases, attrs)
+        revision_class.add_to_class(
+            'revision_for',
+            models.ForeignKey(model)
+        )
+        revision_class.add_to_class(
+            'revision_at',
+            models.DateTimeField(
+                auto_now_add=True
+            )
+        )
 
-        for b in bases:
-            if b.__name__ == 'RevisionSingleTableModel':
-                for field in model._meta.fields:
-                    exluded_field_names = model._get_excluded_field_names(model)
-                    if type(field) == models.ForeignKey and\
+    def __new__(mcs, name, bases, attrs):
+
+        revision_attrs = deepcopy(attrs)
+
+        model = super(RevisionBase, mcs).__new__(mcs, name, bases, attrs)
+
+        revisions_settings = getattr(model, 'Revisions', None)
+        print(dir(revisions_settings))
+
+        revision_type = getattr(revisions_settings, 'revision_type', None)
+        if revision_type == 'single':
+            mcs._create_single_table(model)
+        elif revision_type == 'double':
+            mcs._double(name, bases, revision_attrs, model)
+
+        if getattr(revisions_settings, 'soft_deletion', None):
+            model.add_to_class('is_deleted', models.BooleanField(default=False))
+
+        for field in model._meta.fields:
+            exluded_field_names = model._get_excluded_field_names(model)
+            if type(field) == models.ForeignKey and \
                             field.name not in exluded_field_names:
-                        field.null = True
-                        field.blank = True
-                        field.rel.on_delete = revision_on_delete
-                        new_field_name = field.name + '_serialized'
-                        model.add_to_class(new_field_name,
-                                           models.TextField(new_field_name,
-                                                            null=True,
-                                                            blank=True))
+                field.null = True
+                field.blank = True
+                field.rel.on_delete = revision_on_delete
+                new_field_name = field.name + '_serialized'
+                model.add_to_class(new_field_name,
+                                   models.TextField(new_field_name,
+                                                    null=True,
+                                                    blank=True))
 
         return model
 
 
-class RevisionSingleTableModel(six.with_metaclass(RevisionBase, models.Model)):
+class RevisionedModel(six.with_metaclass(RevisionBase, models.Model)):
     objects = RevisionQuerySet.as_manager()
-
-    revision_at = models.DateTimeField(
-        auto_now_add=True
-    )
-
-    is_revision = models.BooleanField(
-        default=False,
-        )
-
-    revision_for = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        related_name='revision_set'
-    )
 
     class Meta:
         abstract = True
-        order_with_respect_to = "revision_for"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -133,6 +165,13 @@ class RevisionSingleTableModel(six.with_metaclass(RevisionBase, models.Model)):
 
         super().save(*args, **kwargs)
 
+    def delete(self, using=None):
+        if hasattr(self, 'is_deleted'):
+            self.is_deleted = True
+            self.save()
+        else:
+            super(RevisionedModel, self).delete(using=using)
+
     def _field_diff(self, other, field):
 
         # Get the field content from the respective instances.
@@ -164,5 +203,4 @@ class RevisionSingleTableModel(six.with_metaclass(RevisionBase, models.Model)):
             if field_diff:
                 output[field.name] = field_diff
         return output
-
 
