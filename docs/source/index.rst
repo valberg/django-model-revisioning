@@ -23,7 +23,7 @@ Installation
 
 Install from pip::
 
-    pip install djang-doc-brown
+    pip install -e git+https://github.com/valberg/django-doc-brown@master#egg=django-doc-brown
 
 
 Usage
