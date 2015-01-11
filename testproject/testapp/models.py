@@ -38,3 +38,14 @@ class Bar(RevisionedModel):
 
     class Revisions:
         revision_type = 'double'
+        fields = '__all__'
+
+
+class Baz(RevisionedModel):
+    char = models.CharField(max_length=255, null=True, blank=True)
+    int = models.IntegerField(null=True, blank=True)
+    text = models.TextField(null=True, blank=True)
+
+    class Revisions:
+        revision_type = 'double'
+        fields = ['char', 'text']
