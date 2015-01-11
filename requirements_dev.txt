@@ -3,3 +3,4 @@
 loremipsum==1.0.5
 pytest==2.6.4
 pytest-django==2.7.0
+sphinx-rtd-theme==0.1.6
