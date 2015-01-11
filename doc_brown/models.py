@@ -40,7 +40,7 @@ class RevisionBase(ModelBase):
         )
 
     @classmethod
-    def _double(mcs, name, bases, attrs, model):
+    def _create_double_table(mcs, name, bases, attrs, model):
         super_new = super(RevisionBase, mcs).__new__
         revision_class = super_new(mcs, name + 'Revision', bases, attrs)
         revision_class.add_to_class(
@@ -61,13 +61,12 @@ class RevisionBase(ModelBase):
         model = super(RevisionBase, mcs).__new__(mcs, name, bases, attrs)
 
         revisions_settings = getattr(model, 'Revisions', None)
-        print(dir(revisions_settings))
 
         revision_type = getattr(revisions_settings, 'revision_type', None)
         if revision_type == 'single':
             mcs._create_single_table(model)
         elif revision_type == 'double':
-            mcs._double(name, bases, revision_attrs, model)
+            mcs._create_double_table(name, bases, revision_attrs, model)
 
         if getattr(revisions_settings, 'soft_deletion', None):
             model.add_to_class('is_deleted', models.BooleanField(default=False))
