@@ -1,2 +1,2 @@
 # coding: utf-8
-from .models import RevisionedModel
+from .models import RevisionModel

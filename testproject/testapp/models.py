@@ -1,12 +1,12 @@
 from django.db import models
-from doc_brown import RevisionedModel
+from doc_brown import RevisionModel
 
 
 class NonRevisionedModel(models.Model):
     char = models.CharField(max_length=255, null=True, blank=True)
 
 
-class Bar(RevisionedModel):
+class Bar(RevisionModel):
     char = models.CharField(max_length=255, null=True, blank=True)
     int = models.IntegerField(null=True, blank=True)
     text = models.TextField(null=True, blank=True)
@@ -27,7 +27,7 @@ class Bar(RevisionedModel):
         fields = '__all__'
 
 
-class Baz(RevisionedModel):
+class Baz(RevisionModel):
     char = models.CharField(max_length=255, null=True, blank=True)
     int = models.IntegerField(null=True, blank=True)
     text = models.TextField(null=True, blank=True)

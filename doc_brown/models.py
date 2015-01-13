@@ -127,7 +127,7 @@ class RevisionBase(ModelBase):
         return revision_class
 
 
-class RevisionedModel(six.with_metaclass(RevisionBase, models.Model)):
+class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
     class Meta:
         abstract = True
 
@@ -177,7 +177,7 @@ class RevisionedModel(six.with_metaclass(RevisionBase, models.Model)):
         if self._revisions.soft_deletion:
             self.save(using=using, soft_deletion=True)
         else:
-            super(RevisionedModel, self).delete(using=using)
+            super(RevisionModel, self).delete(using=using)
 
     def _field_diff(self, other, field):
 
