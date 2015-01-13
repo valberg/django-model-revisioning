@@ -7,8 +7,6 @@ from django.db.models import Field
 from django.db.models.base import ModelBase
 from django.utils import six
 
-from .querysets import RevisionQuerySet
-
 
 def revision_on_delete(collector, field, sub_objs, using):
     serialized = serializers.serialize('json',
@@ -34,7 +32,6 @@ class RevisionOptions(object):
     AVAILABLE_OPTIONS = ['fields', 'revision_type', 'soft_deletion']
 
     def __init__(self, options):
-        self.revision_type = 'single'
         self.fields = '__all__'
         self.soft_deletion = False
         self.options = options
@@ -50,7 +47,9 @@ class RevisionOptions(object):
                 if attr_name in options_attrs:
                     if attr_name == 'fields' and\
                                     options_attrs['fields'] == '__all__':
-                        setattr(self, attr_name, cls._get_fields())
+                        setattr(self, attr_name,
+                                [field.name for field in cls._meta.fields
+                                 if field.name != 'id'])
                     else:
                         setattr(self, attr_name, options_attrs.pop(attr_name))
                 elif hasattr(self.options, attr_name):
@@ -66,59 +65,41 @@ class RevisionBase(ModelBase):
         new_class = super(RevisionBase, mcs).__new__(mcs, name, bases, attrs)
         new_class.add_to_class('_revisions', RevisionOptions(revisions_options))
 
-        revision_type = getattr(revisions_options, 'revision_type', None)
-        if revision_type == 'single':
-            mcs._create_single_table(new_class)
-        elif revision_type == 'double':
-            mcs._create_double_table(
-                name, bases, revision_attrs, new_class, revisions_options)
+        revision_class = mcs._create_revisions_model(
+            name, bases, revision_attrs, new_class)
 
-        if getattr(revisions_options, 'soft_deletion', None):
+        if new_class._revisions.soft_deletion:
             new_class.add_to_class(
                 'is_deleted', models.BooleanField(default=False))
 
-        for field in new_class._meta.fields:
+        mcs._add_serialize_fields(new_class)
+        mcs._add_serialize_fields(revision_class)
+
+        return new_class
+
+    @classmethod
+    def _add_serialize_fields(mcs, cls):
+        for field in cls._meta.fields:
             exluded_field_names = ['revision_for']
-            if isinstance(field, models.ForeignKey) and\
-                    field.name not in exluded_field_names:
+            if isinstance(field, models.ForeignKey) and \
+                            field.name not in exluded_field_names:
                 field.null = True
                 field.blank = True
                 field.rel.on_delete = revision_on_delete
                 new_field_name = field.name + '_serialized'
-                new_class.add_to_class(new_field_name,
-                                       models.TextField(new_field_name,
-                                                        null=True,
-                                                        blank=True))
-        return new_class
+                cls.add_to_class(new_field_name,
+                                 models.TextField(new_field_name,
+                                                  null=True,
+                                                  blank=True))
 
     @classmethod
-    def _create_single_table(mcs, cls):
-        cls.add_to_class('is_revision', models.BooleanField(default=False))
-        cls.add_to_class(
-            'revision_for',
-            models.ForeignKey(
-                'self',
-                null=True,
-                blank=True,
-                related_name='revision_set'
-            )
-        )
-        cls.add_to_class(
-            'revision_at',
-            models.DateTimeField(
-                auto_now_add=True
-            )
-        )
-
-    @classmethod
-    def _create_double_table(mcs, name, bases, attrs, cls, revisions_options):
+    def _create_revisions_model(mcs, name, bases, attrs, cls):
         super_new = super(RevisionBase, mcs).__new__
 
         new_attrs = {key: val for key, val in attrs.items()
                      if not isinstance(val, Field)}
 
-        revision_fields = getattr(revisions_options, 'fields', None)
-
+        revision_fields = cls._revisions.fields
         if type(revision_fields) == str and revision_fields == '__all__':
             revision_fields = {
                 key: val for key, val in attrs.items()
@@ -128,9 +109,10 @@ class RevisionBase(ModelBase):
             revision_fields = {key: attrs[key] for key in revision_fields}
 
         new_attrs.update(revision_fields)
-        setattr(revisions_options, 'fields', revision_fields)
+        new_class_name = name + 'Revision'
+        new_attrs['__qualname__'] = new_class_name
 
-        revision_class = super_new(mcs, name + 'Revision', bases, new_attrs)
+        revision_class = super_new(mcs, new_class_name, bases, new_attrs)
         revision_class.add_to_class(
             'revision_for',
             models.ForeignKey(cls)
@@ -142,51 +124,16 @@ class RevisionBase(ModelBase):
             )
         )
         cls.revision_class = revision_class
+        return revision_class
 
 
 class RevisionedModel(six.with_metaclass(RevisionBase, models.Model)):
-    objects = RevisionQuerySet.as_manager()
-
     class Meta:
         abstract = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.old_data = self._get_instance_data()
-
-    @classmethod
-    def _get_excluded_field_names(cls):
-        """
-        Get the names of fields that should not be taken into consideration
-        when checking if a revision should be made.
-
-        :return: A list of strings
-        """
-        excluded_fields = ['id', 'is_revision', 'revision_for', 'revision_at']
-
-        for field in cls._meta.fields:
-            # If there is a time-based field that has auto_now set to True,
-            # then we don't want it in the comparison
-            if auto_now_field(field):
-                excluded_fields.append(field.name)
-
-        return excluded_fields
-
-    @classmethod
-    def _get_fields(cls):
-        """
-        Get the actual fields that should not be taken into consideration
-        when checking if a revision should be made.
-
-        :return: A list of field instances
-        """
-        fields = []
-        for field in cls._meta.fields:
-            if field.name in cls._get_excluded_field_names():
-                continue
-            fields.append(field)
-
-        return fields
 
     def _get_instance_data(self):
         """ Get the instance data.
@@ -197,39 +144,29 @@ class RevisionedModel(six.with_metaclass(RevisionBase, models.Model)):
                  check if a revision is required.
         """
         data = dict()
-        for field in self._get_fields():
-            # Get the value of the field and add it to the dict
-            data[field.get_attname()] = field.value_from_object(self)
+        for field in self._meta.fields:
+            if field.name in self._revisions.fields:
+                # Get the value of the field and add it to the dict
+                field_name = field.name
+                if isinstance(field, models.ForeignKey):
+                    field_name += '_id'
+                data[field_name] = field.value_from_object(self)
 
         return data
 
     def save(self, *args, **kwargs):
-        has_changed = self.old_data != self._get_instance_data()
-        revision_type = self._revisions.revision_type
+        new_data = self._get_instance_data()
+        has_changed = self.old_data != new_data
 
         if kwargs.pop('soft_deletion', None):
             self.is_deleted = True
 
         if self.pk and has_changed:
-            if revision_type == 'single':
-                if not self.is_revision:
-                    # Create a revision with old data:
-                    cls = self.__class__
-                    revision = cls(**self.old_data)
-                    revision.is_revision = True
-                    revision.revision_for = self
-                    revision.save()
-
-            elif revision_type == 'double':
-                revision_data = {
-                    field.name: self.old_data[field.name]
-                    for field in self._revisions.fields
-                }
-                if self.pk and has_changed:
-                    self.revision_class.objects.create(
-                        revision_for=self,
-                        **revision_data
-                    )
+            if self.pk and has_changed:
+                self.revision_class.objects.create(
+                    revision_for=self,
+                    **self.old_data
+                )
 
         # Update the old data dict so that a revision does not get created
         # if an instance gets saved multiple times without changes

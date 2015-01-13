@@ -15,15 +15,13 @@ Contents:
    :maxdepth: 2
 
    options
-   revision_types
-
 
 Installation
 ------------
 
 Install from pip::
 
-    pip install -e git+https://github.com/valberg/django-doc-brown@master#egg=django-doc-brown
+    pip install git+https://github.com/valberg/django-doc-brown@master#egg=django-doc-brown
 
 
 Usage
