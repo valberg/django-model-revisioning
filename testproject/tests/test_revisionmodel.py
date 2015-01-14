@@ -53,3 +53,14 @@ def test_foreign_keys(db):
     non_revisioned_instance.delete()
 
     assert bar1.revision_class.objects.count() == 1
+
+
+def test_parent_revision(db):
+    bar1 = models.Bar.objects.create()
+    bar1.char = 'foo'
+    bar1.save()
+    first_revision = bar1.revision_class.objects.last()
+    assert first_revision.parent_revision is None
+    bar1.text = 'baz'
+    bar1.save()
+    assert bar1.revision_class.objects.last().parent_revision == first_revision

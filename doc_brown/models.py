@@ -29,7 +29,7 @@ class RevisionOptions(object):
     This class is basically a copy of the django.db.options.Options class
     """
 
-    AVAILABLE_OPTIONS = ['fields', 'revision_type', 'soft_deletion']
+    AVAILABLE_OPTIONS = ['fields', 'soft_deletion']
 
     def __init__(self, options):
         self.fields = '__all__'
@@ -123,6 +123,12 @@ class RevisionBase(ModelBase):
                 auto_now_add=True
             )
         )
+        revision_class.add_to_class(
+            'parent_revision',
+            models.ForeignKey(
+                'self', null=True, blank=True
+            )
+        )
         cls.revision_class = revision_class
         return revision_class
 
@@ -151,7 +157,6 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
                 if isinstance(field, models.ForeignKey):
                     field_name += '_id'
                 data[field_name] = field.value_from_object(self)
-
         return data
 
     def save(self, *args, **kwargs):
@@ -162,15 +167,16 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
             self.is_deleted = True
 
         if self.pk and has_changed:
-            if self.pk and has_changed:
-                self.revision_class.objects.create(
-                    revision_for=self,
-                    **self.old_data
-                )
+            parent_revision = self.revision_class.objects.last()
+            self.revision_class.objects.create(
+                revision_for=self,
+                parent_revision=parent_revision,
+                **self.old_data
+            )
 
         # Update the old data dict so that a revision does not get created
         # if an instance gets saved multiple times without changes
-        self.__dict__['old_data'] = self._get_instance_data()
+        self.old_data = self._get_instance_data()
         super().save(*args, **kwargs)
 
     def delete(self, using=None):
