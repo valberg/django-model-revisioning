@@ -6,3 +6,9 @@ python:
   - "2.6"
 install: pip install -r requirements/dev.txt
 script: py.test testproject/ --create-db
+addons:
+  postgresql: "9.3"
+before_script:
+  - psql -c "create database docbrown;" -U postgres
+  - psql -c "create role docbrown with login password 'docbrown' createdb;" -U postgres
+  - ./testproject/manage.py makemigrations
