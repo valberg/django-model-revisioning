@@ -218,7 +218,7 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
         # Update the old data dict so that a revision does not get created
         # if an instance gets saved multiple times without changes
         self.old_data = self._get_instance_data()
-        super().save(*args, **kwargs)
+        super(RevisionModel, self).save(*args, **kwargs)
 
         self._create_revision()
 
