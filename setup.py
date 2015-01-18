@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 VERSION = 0.1
 
-with open('requirements_base.txt') as f:
+with open('requirements/base.txt') as f:
     requirements = f.readlines()
 
 setup(
