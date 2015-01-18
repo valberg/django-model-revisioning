@@ -209,18 +209,23 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
 
         # TODO: We should also do the things below when using `update()`
 
-        new_data = self._get_instance_data()
-        has_changed = self.old_data != new_data
+        changing_head = kwargs.pop('changing_head', False)
 
-        if kwargs.pop('soft_deletion', None):
-            self.is_deleted = True
+        if not changing_head:
+            # new_data = self._get_instance_data()
+            # has_changed = self.old_data != new_data
 
-        # Update the old data dict so that a revision does not get created
-        # if an instance gets saved multiple times without changes
-        self.old_data = self._get_instance_data()
+            if kwargs.pop('soft_deletion', None):
+                self.is_deleted = True
+
+            # Update the old data dict so that a revision does not get created
+            # if an instance gets saved multiple times without changes
+            self.old_data = self._get_instance_data()
+
         super(RevisionModel, self).save(*args, **kwargs)
 
-        self._create_revision()
+        if not changing_head:
+            self._create_revision()
 
     def delete(self, using=None):
         if self._revisions.soft_deletion:
@@ -234,6 +239,17 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
             return self.revisions.get(is_head=True)
         except self.revision_class.DoesNotExist:
             return None
+
+    def set_head_to(self, revision):
+        fields = {field: self._meta.get_field(field).value_from_object(revision)
+                  for field in self._revisions.fields}
+
+        for name, value in fields.items():
+            setattr(self, name, value)
+
+        self.save(changing_head=True)
+
+        revision.save()
 
     def _field_diff(self, other, field):
 

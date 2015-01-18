@@ -25,6 +25,7 @@ def test_revision_on_edit(db):
     revision2 = bar1.revision_class.objects.last()
     assert revision2.text == text_body
 
+
 def test_foreign_keys(db):
     non_revisioned_instance = models.NonRevisionedModel.objects.create()
     bar1 = models.Bar.objects.create(
@@ -55,3 +56,34 @@ def test_parent_revision(db):
 
     assert bar1.current_revision != first_revision
     assert bar1.current_revision.parent_revision == first_revision
+
+
+def test_change_head(db):
+    bar1 = models.Bar.objects.create()
+
+    first_revision = bar1.revisions.get()
+
+    bar1.char = 'foo'
+    bar1.save()
+
+    assert bar1.char == 'foo'
+
+    bar1.set_head_to(first_revision)
+
+    assert bar1.char is None
+    assert first_revision.is_head
+
+
+def test_branching(db):
+    bar1 = models.Bar.objects.create()
+    first_revision = bar1.revisions.get()
+
+    bar1.char = 'foo'
+    bar1.save()
+
+    bar1.set_head_to(first_revision)
+
+    bar1.char = 'baz'
+    bar1.save()
+
+    assert bar1.revisions.filter(parent_revision=first_revision).count() == 2
