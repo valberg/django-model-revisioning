@@ -5,4 +5,4 @@ python:
   - "2.7"
   - "2.6"
 install: pip install -r requirements/dev.txt
-script: py.test testproject/
+script: py.test testproject/ --create-db
