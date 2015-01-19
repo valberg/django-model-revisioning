@@ -3,11 +3,15 @@ python:
   - "3.4"
   - "3.3"
   - "2.7"
-install: pip install -r requirements/dev.txt
-script: py.test testproject/ --create-db
 addons:
   postgresql: "9.3"
+install:
+  - pip install -r requirements/dev.txt
+  - pip install pytest-cov coveralls
 before_script:
   - psql -c "create database docbrown;" -U postgres
   - psql -c "create role docbrown with login password 'docbrown' createdb;" -U postgres
   - ./testproject/manage.py makemigrations
+script: py.test testproject --create-db
+after_success: py.test --cov=doc_brown testproject
+
