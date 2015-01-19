@@ -12,6 +12,5 @@ before_script:
   - psql -c "create database docbrown;" -U postgres
   - psql -c "create role docbrown with login password 'docbrown' createdb;" -U postgres
   - ./testproject/manage.py makemigrations
-script: py.test testproject --create-db
-after_success: py.test --cov=doc_brown testproject
-
+script: py.test --cov=doc_brown testproject --create-db
+after_success: coveralls
