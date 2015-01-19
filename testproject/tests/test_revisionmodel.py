@@ -87,3 +87,42 @@ def test_branching(db):
     bar1.save()
 
     assert bar1.revisions.filter(parent_revision=first_revision).count() == 2
+
+
+def test_specific_fields_option(db):
+    baz1 = models.Baz.objects.create()
+    first_revision = baz1.revisions.get()
+    assert not hasattr(first_revision, 'int')
+
+
+def test_specific_fields_option_change_head(db):
+    baz1 = models.Baz.objects.create()
+
+    first_revision = baz1.revisions.get()
+
+    baz1.char = 'foo'
+    baz1.save()
+
+    assert baz1.char == 'foo'
+
+    baz1.set_head_to(first_revision)
+
+    assert baz1.char is None
+    assert first_revision.is_head
+
+
+def test_soft_deletion(db):
+    soft_deleted1 = models.SoftDeleted.objects.create()
+    soft_deleted1.delete()
+    assert soft_deleted1.is_deleted is True
+
+    # Bar objects should delete!
+    bar1 = models.Bar.objects.create()
+    bar1.delete()
+    assert bar1.id is None
+
+
+def test_model_without_options(db):
+    without_options = models.ModelWithoutOptions()
+    assert without_options._revisions.fields == ['content']
+    assert without_options._revisions.soft_deletion is False

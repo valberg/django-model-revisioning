@@ -34,3 +34,14 @@ class Baz(RevisionModel):
 
     class Revisions:
         fields = ['char', 'text']
+
+
+class SoftDeleted(RevisionModel):
+    content = models.TextField()
+
+    class Revisions:
+        soft_deletion = True
+
+
+class ModelWithoutOptions(RevisionModel):
+    content = models.TextField()

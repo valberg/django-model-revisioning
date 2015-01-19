@@ -61,6 +61,12 @@ class RevisionOptions(object):
 
     def contribute_to_class(self, cls, name):
         cls._revisions = self
+
+        field_names = [
+            field.name for field in cls._meta.fields
+            if field.name not in ['id', 'is_head']
+        ]
+
         if self.options:
             options_attrs = self.options.__dict__.copy()
 
@@ -72,27 +78,17 @@ class RevisionOptions(object):
                 if attr_name in options_attrs:
                     if attr_name == 'fields' and\
                                     options_attrs['fields'] == '__all__':
-                        setattr(
-                            self,
-                            attr_name,
-                            [
-                                field.name for field in cls._meta.fields
-                                if field.name not in ['id', 'is_head']
-                            ]
-                        )
+                        setattr(self, attr_name, field_names)
                     else:
                         setattr(self, attr_name, options_attrs.pop(attr_name))
-                elif hasattr(self.options, attr_name):
-                    setattr(self, attr_name, getattr(self.options, attr_name))
+                else:
+                    if attr_name == 'fields':
+                        setattr(self, attr_name, field_names)
+                    else:
+                        setattr(
+                            self, attr_name, getattr(self, attr_name))
         else:
-            setattr(
-                self,
-                'fields',
-                [
-                    field.name for field in cls._meta.fields
-                    if field.name not in ['id', 'is_head']
-                ]
-            )
+            setattr(self, 'fields', field_names)
 
 
 class RevisionBase(ModelBase):
@@ -206,20 +202,13 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
         )
 
     def save(self, *args, **kwargs):
-
-        # TODO: We should also do the things below when using `update()`
-
         changing_head = kwargs.pop('changing_head', False)
+        soft_deletion = kwargs.pop('soft_deletion', False)
 
         if not changing_head:
-            # new_data = self._get_instance_data()
-            # has_changed = self.old_data != new_data
-
-            if kwargs.pop('soft_deletion', None):
+            if soft_deletion:
                 self.is_deleted = True
 
-            # Update the old data dict so that a revision does not get created
-            # if an instance gets saved multiple times without changes
             self.old_data = self._get_instance_data()
 
         super(RevisionModel, self).save(*args, **kwargs)
