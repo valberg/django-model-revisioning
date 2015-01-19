@@ -126,3 +126,17 @@ def test_model_without_options(db):
     without_options = models.ModelWithoutOptions()
     assert without_options._revisions.fields == ['content']
     assert without_options._revisions.soft_deletion is False
+
+
+def test_revision_on_update(db):
+    bar1 = models.Bar.objects.create()
+    bar2 = models.Bar.objects.create()
+
+    models.Bar.objects.all().update(char='foo')
+
+    assert bar1.revisions.count() == 2
+    assert bar2.revisions.count() == 2
+
+    assert bar1.revisions.filter(char='foo').count() == 1
+    assert bar2.revisions.filter(char='foo').count() == 1
+

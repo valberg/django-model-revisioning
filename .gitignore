@@ -4,3 +4,5 @@ db.sqlite3
 django_doc_brown.egg-info/
 __pycache__/
 docs/build/
+.coverage
+htmlcov/

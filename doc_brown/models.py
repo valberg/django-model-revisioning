@@ -1,11 +1,10 @@
 import difflib
-from copy import deepcopy
 
-from django.core import serializers
 from django.db import models
-from django.db.models import Field
-from django.db.models.base import ModelBase
 from django.utils import six
+
+from .base import RevisionBase
+from .managers import RevisionedModelManager
 
 
 class Revision(models.Model):
@@ -32,149 +31,12 @@ class Revision(models.Model):
         return str(self.id)
 
 
-def revision_on_delete(collector, field, sub_objs, using):
-    serialized = serializers.serialize('json',
-                                       [getattr(sub_objs[0], field.name)])
-    for obj in sub_objs:
-        setattr(obj, field.name, None)
-        setattr(obj, field.name + '_serialized', serialized)
-        obj.save()
-
-
-def is_auto_now_field(field):
-    if isinstance(field, models.DateField) or\
-            isinstance(field, models.DateTimeField):
-        return field.auto_now is True or field.auto_now_add is True
-
-
-class RevisionOptions(object):
-    """
-    This class is basically a copy of the django.db.options.Options class
-    """
-
-    AVAILABLE_OPTIONS = ['fields', 'soft_deletion']
-
-    def __init__(self, options):
-        self.fields = '__all__'
-        self.soft_deletion = False
-        self.options = options
-
-    def contribute_to_class(self, cls, name):
-        cls._revisions = self
-
-        field_names = [
-            field.name for field in cls._meta.fields
-            if field.name not in ['id', 'is_head']
-        ]
-
-        if self.options:
-            options_attrs = self.options.__dict__.copy()
-
-            for name in self.options.__dict__:
-                if name.startswith('_'):
-                    del options_attrs[name]
-
-            for attr_name in self.AVAILABLE_OPTIONS:
-                if attr_name in options_attrs:
-                    if attr_name == 'fields' and\
-                                    options_attrs['fields'] == '__all__':
-                        setattr(self, attr_name, field_names)
-                    else:
-                        setattr(self, attr_name, options_attrs.pop(attr_name))
-                else:
-                    if attr_name == 'fields':
-                        setattr(self, attr_name, field_names)
-                    else:
-                        setattr(
-                            self, attr_name, getattr(self, attr_name))
-        else:
-            setattr(self, 'fields', field_names)
-
-
-class RevisionBase(ModelBase):
-    def __new__(mcs, name, bases, attrs):
-
-        revision_attrs = deepcopy(attrs)
-        revisions_options = attrs.pop('Revisions', None)
-
-        new_class = super(RevisionBase, mcs).__new__(mcs, name, bases, attrs)
-        new_class.add_to_class('_revisions', RevisionOptions(revisions_options))
-
-        if new_class._meta.model_name != 'revisionmodel':
-            revision_class = mcs._create_revisions_model(
-                name, bases, revision_attrs, new_class)
-
-            revision_class.add_to_class(
-                'is_head', models.BooleanField(default=False))
-
-            mcs._add_serialize_fields(revision_class)
-
-        if new_class._revisions.soft_deletion:
-            new_class.add_to_class(
-                'is_deleted', models.BooleanField(default=False))
-
-        mcs._add_serialize_fields(new_class)
-
-        return new_class
-
-    @classmethod
-    def _add_serialize_fields(mcs, cls):
-        for field in cls._meta.fields:
-            exluded_field_names = ['revision_for', 'is_head']
-            if isinstance(field, models.ForeignKey) and \
-                    field.name not in exluded_field_names:
-
-                field.null = True
-                field.blank = True
-                field.rel.on_delete = revision_on_delete
-                new_field_name = field.name + '_serialized'
-                cls.add_to_class(new_field_name,
-                                 models.TextField(new_field_name,
-                                                  null=True,
-                                                  blank=True))
-
-    @classmethod
-    def _create_revisions_model(mcs, name, bases, attrs, cls):
-        super_new = super(RevisionBase, mcs).__new__
-
-        new_attrs = {key: val for key, val in attrs.items()
-                     if not isinstance(val, Field)}
-
-        revision_fields = {key: attrs[key] for key in cls._revisions.fields}
-
-        new_attrs.update(revision_fields)
-        new_class_name = name + 'Revision'
-        new_attrs['__qualname__'] = new_class_name
-
-        bases = (Revision,)
-        revision_class = super_new(mcs, new_class_name, bases, new_attrs)
-        revision_class.add_to_class(
-            'revision_for',
-            models.ForeignKey(cls, related_name='revisions'),
-        )
-        revision_class.add_to_class(
-            'revision_at',
-            models.DateTimeField(
-                auto_now_add=True
-            )
-        )
-        revision_class.add_to_class(
-            'parent_revision',
-            models.ForeignKey(
-                'self', null=True, blank=True
-            )
-        )
-        cls.revision_class = revision_class
-        return revision_class
-
-
 class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
+
+    objects = RevisionedModelManager()
+
     class Meta:
         abstract = True
-
-    def __init__(self, *args, **kwargs):
-        super(RevisionModel, self).__init__(*args, **kwargs)
-        self.old_data = self._get_instance_data()
 
     def _get_instance_data(self):
         """ Get the instance data.
@@ -194,11 +56,15 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
                 data[field_name] = field.value_from_object(self)
         return data
 
-    def _create_revision(self):
+    def _create_revision(self, **kwargs):
+        data = self._get_instance_data()
+        if kwargs:
+            data = kwargs
+
         self.revision_class.objects.create(
             revision_for=self,
             parent_revision=self.current_revision,
-            **self.old_data
+            **data
         )
 
     def save(self, *args, **kwargs):
@@ -208,8 +74,6 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
         if not changing_head:
             if soft_deletion:
                 self.is_deleted = True
-
-            self.old_data = self._get_instance_data()
 
         super(RevisionModel, self).save(*args, **kwargs)
 
