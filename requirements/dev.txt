@@ -1,5 +1,5 @@
 -r base.txt
 -e .
 pytest==2.6.4
-pytest-django==2.7.0
+pytest-django==2.8.0
 django-extensions==1.4.9
