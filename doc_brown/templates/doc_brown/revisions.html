@@ -21,7 +21,6 @@
           <thead>
           <tr>
             <th scope="col">{% trans 'Date/time' %}</th>
-            <th scope="col">{% trans 'User' %}</th>
             <th scope="col">{% trans 'Is head' %}</th>
             <th scope="col"></th>
           </tr>
@@ -30,7 +29,6 @@
           {% for revision in revisions %}
             <tr {% if revision.is_head %}style="background-color: palegreen"{% endif %}>
               <th scope="row">{{ revision.revision_at|date:"DATETIME_FORMAT" }}</th>
-              <td>{{ revision.id }}</td>
               <td>{{ revision.is_head }}</td>
               <td width="200px">
                 <button class="button more" data-id="more-{{ revision.id }}"

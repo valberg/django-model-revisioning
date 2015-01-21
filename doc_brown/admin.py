@@ -39,8 +39,6 @@ class RevisionedModelAdmin(ModelAdmin):
             pk=unquote(object_id)
         )
 
-        print(request)
-
         if request.POST:
             revision_id = request.POST.get('revision_id', None)
             obj.set_head_to(revision_id)
@@ -49,7 +47,6 @@ class RevisionedModelAdmin(ModelAdmin):
             raise PermissionDenied
 
         opts = model._meta
-        app_label = opts.app_label
 
         try:
             revisions = obj.revisions.all()
