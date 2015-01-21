@@ -94,6 +94,9 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
             return None
 
     def set_head_to(self, revision):
+        if type(revision) == str:
+            revision = self.revisions.get(pk=revision)
+
         fields = {field: self._meta.get_field(field).value_from_object(revision)
                   for field in self._revisions.fields}
 

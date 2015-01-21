@@ -1,0 +1,80 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls admin_static doc_brown_tags %}
+
+{% block extrahead %}{{ block.super }}{{ media }}{% endblock %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ module_name }}</a>
+    &rsaquo; <a href="{% url opts|admin_urlname:'change' object.pk|admin_urlquote %}">{{ object|truncatewords:"18" }}</a>
+    &rsaquo; {% trans 'Revisions' %}
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div id="content-main">
+    <div class="module">
+      {% if revisions %}
+        <table id="change-history">
+          <thead>
+          <tr>
+            <th scope="col">{% trans 'Date/time' %}</th>
+            <th scope="col">{% trans 'User' %}</th>
+            <th scope="col">{% trans 'Is head' %}</th>
+            <th scope="col"></th>
+          </tr>
+          </thead>
+          <tbody>
+          {% for revision in revisions %}
+            <tr {% if revision.is_head %}style="background-color: palegreen"{% endif %}>
+              <th scope="row">{{ revision.revision_at|date:"DATETIME_FORMAT" }}</th>
+              <td>{{ revision.id }}</td>
+              <td>{{ revision.is_head }}</td>
+              <td width="200px">
+                <button class="button more" data-id="more-{{ revision.id }}"
+                        onClick="django.jQuery('#more-{{ revision.id }}').toggle();">{% trans 'Show more' %}</button>
+              </td>
+            </tr>
+            <tr style="display: none;" id="more-{{ revision.id }}">
+              <td colspan="4">
+                <h4>
+                  {% trans 'Fields' %}
+                </h4>
+                  <table style="width: 100%">
+                    <thead>
+                      <tr>
+                        <th>{% trans 'Attribute' %}</th>
+                        <th>{% trans 'Revision value' %}</th>
+                        <th>{% trans 'Current value' %}</th>
+                      </tr>
+                    </thead>
+                    {% revision_as_dict revision as revision_dict %}
+                    {% for key, value in revision_dict.items %}
+                      <tr>
+                        <td>{{ key }}</td>
+                        <td>{{ value }}</td>
+                        <td>{% get_attr object key %}</td>
+                      </tr>
+                    {% endfor %}
+                  </table>
+
+                {% if not revision.is_head %}
+                  <form action="" method="post">{% csrf_token %}
+                    <input type="hidden" name="revision_id" value="{{ revision.id }}" />
+                    <button class="button default">{% trans 'Make head' %}</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>{% trans "This object doesn't have any revision. This is probably because it doesn't have revisions enabled." %}</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+
