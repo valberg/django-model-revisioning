@@ -2,12 +2,16 @@ import difflib
 
 from django.db import models
 from django.utils import six
+from django_extensions.db.fields import ShortUUIDField
 
 from .base import RevisionBase
 from .managers import RevisionedModelManager
 
 
 class Revision(models.Model):
+
+    id = ShortUUIDField(primary_key=True)
+
     class Meta:
         abstract = True
 
