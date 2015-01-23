@@ -9,20 +9,20 @@ import pytest
 def test_revision_on_edit(db):
     bar1 = models.Bar.objects.create()
     assert bar1.id
-    assert bar1.revision_class.objects.count() == 1
+    assert bar1.revisions.count() == 1
 
     bar1.char = 'Bar1'
     bar1.save()
-    assert bar1.revision_class.objects.count() == 2
+    assert bar1.revisions.count() == 2
 
     text_body = 'lalala'
     bar1.char = 'Bar1 updated'
     bar1.text = text_body
     bar1.save()
 
-    assert bar1.revision_class.objects.count() == 3
+    assert bar1.revisions.count() == 3
 
-    revision2 = bar1.revision_class.objects.last()
+    revision2 = bar1.revisions.last()
     assert revision2.text == text_body
 
 
