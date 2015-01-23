@@ -2,7 +2,6 @@ from functools import update_wrapper
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.utils import unquote
 from django.core.exceptions import PermissionDenied
-from django.forms import model_to_dict
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.utils.encoding import force_text
@@ -14,7 +13,7 @@ class RevisionedModelAdmin(ModelAdmin):
     change_form_template = 'doc_brown/change_form.html'
 
     def get_urls(self):
-        from django.conf.urls import patterns, url
+        from django.conf.urls import url
         urlpatterns = super(RevisionedModelAdmin, self).get_urls()
         info = self.model._meta.app_label, self.model._meta.model_name
 
@@ -67,4 +66,3 @@ class RevisionedModelAdmin(ModelAdmin):
         context.update(extra_context or {})
         return TemplateResponse(request, 'doc_brown/revisions.html', context,
                                 current_app=self.admin_site.name)
-
