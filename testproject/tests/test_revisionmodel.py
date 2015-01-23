@@ -15,14 +15,17 @@ def test_revision_on_edit(db):
     bar1.save()
     assert bar1.revisions.count() == 2
 
-    text_body = 'lalala'
+    text_body = 'Integer posuere erat a ante venenatis dapibus posuere velit aliquet.'
+
     bar1.char = 'Bar1 updated'
     bar1.text = text_body
     bar1.save()
 
     assert bar1.revisions.count() == 3
 
-    revision2 = bar1.revisions.last()
+    print([rev.text for rev in bar1.revisions.all()])
+
+    revision2 = bar1.revisions.order_by('revision_at').last()
     assert revision2.text == text_body
 
 
@@ -31,18 +34,18 @@ def test_foreign_keys(db):
     bar1 = models.Bar.objects.create(
         non_revisioned_foreign_key=non_revisioned_instance
     )
-    assert bar1.revision_class.objects.count() == 1
+    assert bar1.revisions.count() == 1
 
     bar1.non_revisioned_foreign_key = None
     bar1.save()
-    assert bar1.revision_class.objects.count() == 2
+    assert bar1.revisions.count() == 2
 
-    revision1 = bar1.revision_class.objects.first()
+    revision1 = bar1.revisions.order_by('revision_at').first()
     assert revision1.non_revisioned_foreign_key == non_revisioned_instance
 
     non_revisioned_instance.delete()
 
-    assert bar1.revision_class.objects.count() == 2
+    assert bar1.revisions.count() == 2
 
 
 def test_parent_revision(db):
