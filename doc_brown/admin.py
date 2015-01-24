@@ -17,14 +17,9 @@ class RevisionedModelAdmin(ModelAdmin):
         urlpatterns = super(RevisionedModelAdmin, self).get_urls()
         info = self.model._meta.app_label, self.model._meta.model_name
 
-        def wrap(view):
-            def wrapper(*args, **kwargs):
-                return self.admin_site.admin_view(view)(*args, **kwargs)
-            return update_wrapper(wrapper, view)
-
         urlpatterns = [url(
             r'^(.+)/revisions/$',
-            wrap(self.revisions_view),
+            self.admin_site.admin_view(self.revisions_view),
             name='%s_%s_revisions' % info
         )] + urlpatterns
 
