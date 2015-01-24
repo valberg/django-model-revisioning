@@ -4,6 +4,7 @@ from django.db import models
 from django.utils import six
 from django_extensions.db.fields import ShortUUIDField
 
+from . import signals
 from .base import RevisionBase
 from .managers import RevisionedModelManager
 
@@ -68,10 +69,21 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
         if kwargs:
             data = kwargs
 
-        self.revision_class.objects.create(
+        signals.pre_revision.send(
+            sender=self.__class__,
+            instance=self,
+        )
+
+        new_revision = self.revisions.create(
             revision_for=self,
             parent_revision=self.current_revision,
             **data
+        )
+
+        signals.post_revision.send(
+            sender=self.__class__,
+            instance=self,
+            revision=new_revision
         )
 
     def save(self, *args, **kwargs):
@@ -101,6 +113,13 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
             return None
 
     def set_head_to(self, revision):
+
+        signals.pre_change_head.send(
+            sender=self.__class__,
+            instance=self,
+            current_head=self.current_revision,
+        )
+
         if type(revision) == str:
             revision = self.revisions.get(pk=revision)
 
@@ -113,6 +132,12 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
         self.save(changing_head=True)
 
         revision.save()
+
+        signals.post_change_head.send(
+            sender=self.__class__,
+            instance=self,
+            current_head=revision,
+        )
 
     def _field_diff(self, other, field):
 

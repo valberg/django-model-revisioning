@@ -1,9 +1,11 @@
 # coding: utf-8
-from contextlib import contextmanager
+import pytest
+
+from mock_django import mock_signal_receiver
+
+from doc_brown import signals
 
 from testapp import models
-
-import pytest
 
 
 def test_revision_on_edit(db):
@@ -141,3 +143,25 @@ def test_revision_on_update(db):
     assert bar1.revisions.filter(char='foo').count() == 1
     assert bar2.revisions.filter(char='foo').count() == 1
 
+
+def test_revision_creation_signals(db):
+    with mock_signal_receiver(signals.pre_revision) as pre_revision:
+        with mock_signal_receiver(signals.post_revision) as post_revision:
+            bar = models.Bar.objects.create()
+            assert pre_revision.call_count == 1
+            assert post_revision.call_count == 1
+
+            bar.char = 'foo'
+            bar.save()
+
+
+def test_head_change_signals(db):
+    bar = models.Bar.objects.create()
+    bar.char = 'foo'
+    bar.save()
+    with mock_signal_receiver(signals.pre_change_head) as pre_change_head:
+        with mock_signal_receiver(signals.post_change_head) as post_change_head:
+            bar.set_head_to(bar.revisions.first())
+
+            assert pre_change_head.call_count == 1
+            assert post_change_head.call_count == 1
