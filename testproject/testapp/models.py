@@ -1,5 +1,5 @@
 from django.db import models
-from doc_brown import RevisionModel
+from doc_brown.models import RevisionModel
 
 
 class NonRevisionedModel(models.Model):
