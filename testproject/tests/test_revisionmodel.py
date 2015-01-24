@@ -23,9 +23,7 @@ def test_revision_on_edit(db):
 
     assert bar1.revisions.count() == 3
 
-    print([rev.text for rev in bar1.revisions.all()])
-
-    revision2 = bar1.revisions.order_by('revision_at').last()
+    revision2 = bar1.revisions.last()
     assert revision2.text == text_body
 
 
@@ -40,7 +38,7 @@ def test_foreign_keys(db):
     bar1.save()
     assert bar1.revisions.count() == 2
 
-    revision1 = bar1.revisions.order_by('revision_at').first()
+    revision1 = bar1.revisions.first()
     assert revision1.non_revisioned_foreign_key == non_revisioned_instance
 
     non_revisioned_instance.delete()

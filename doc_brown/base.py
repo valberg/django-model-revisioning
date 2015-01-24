@@ -70,17 +70,5 @@ class RevisionBase(ModelBase):
             'revision_for',
             models.ForeignKey(cls, related_name='revisions'),
         )
-        revision_class.add_to_class(
-            'revision_at',
-            models.DateTimeField(
-                auto_now_add=True
-            )
-        )
-        revision_class.add_to_class(
-            'parent_revision',
-            models.ForeignKey(
-                'self', null=True, blank=True
-            )
-        )
         cls.revision_class = revision_class
         return revision_class

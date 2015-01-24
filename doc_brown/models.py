@@ -11,9 +11,12 @@ from .managers import RevisionedModelManager
 class Revision(models.Model):
 
     id = ShortUUIDField(primary_key=True)
+    revision_at = models.DateTimeField(auto_now_add=True)
+    parent_revision = models.ForeignKey('self', null=True, blank=True)
 
     class Meta:
         abstract = True
+        ordering = ['revision_at']
 
     def save(self, *args, **kwargs):
         self.is_head = True
