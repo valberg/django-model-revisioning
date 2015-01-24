@@ -1,5 +1,5 @@
+# coding: utf-8
 from django.core import serializers
-from django.db import models
 
 
 def revision_on_delete(collector, field, sub_objs, using):

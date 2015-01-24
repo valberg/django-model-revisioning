@@ -1,3 +1,4 @@
+# coding: utf-8
 class RevisionOptions(object):
     """
     This class is basically a copy of the django.db.options.Options class

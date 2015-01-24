@@ -1,3 +1,4 @@
+# coding: utf-8
 import django.dispatch
 
 pre_revision = django.dispatch.Signal(
@@ -9,7 +10,7 @@ post_revision = django.dispatch.Signal(
 )
 
 pre_change_head = django.dispatch.Signal(
-    providing_args=['instance', 'current_head']
+    providing_args=['instance', 'current_head', 'future_head']
 )
 
 post_change_head = django.dispatch.Signal(

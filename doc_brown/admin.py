@@ -1,4 +1,4 @@
-from functools import update_wrapper
+# coding: utf-8
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.utils import unquote
 from django.core.exceptions import PermissionDenied
@@ -9,12 +9,12 @@ from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy as _
 
 
-class RevisionedModelAdmin(ModelAdmin):
+class RevisionModelAdmin(ModelAdmin):
     change_form_template = 'doc_brown/change_form.html'
 
     def get_urls(self):
         from django.conf.urls import url
-        urlpatterns = super(RevisionedModelAdmin, self).get_urls()
+        urlpatterns = super(RevisionModelAdmin, self).get_urls()
         info = self.model._meta.app_label, self.model._meta.model_name
 
         urlpatterns = [url(
@@ -35,7 +35,7 @@ class RevisionedModelAdmin(ModelAdmin):
 
         if request.POST:
             revision_id = request.POST.get('revision_id', None)
-            obj.set_head_to(revision_id)
+            obj.set_head(revision_id)
 
         if not self.has_change_permission(request, obj):
             raise PermissionDenied

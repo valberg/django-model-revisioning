@@ -1,10 +1,11 @@
+# coding: utf-8
 from django.core.management import BaseCommand, CommandError
 from django.apps import apps
 
 
 class Command(BaseCommand):
 
-    args = '<app> <model:label> <pk> <output>'
+    args = '<model_path:label> <pk> <output>'
     help = 'Draw a graph over revisions for a given instance'
 
     def handle(self, *args, **options):
@@ -18,7 +19,8 @@ class Command(BaseCommand):
         except ImportError:
             raise CommandError('graphviz not installed.')
 
-        app_name, model_name, pk, output = args
+        model_path, pk, output = args
+        app_name, model_name = model_path.split('.')
         model_name = model_name.split(':')
         if len(model_name) == 2:
             label = model_name[1]

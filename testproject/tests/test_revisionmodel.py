@@ -71,7 +71,7 @@ def test_change_head(db):
 
     assert bar1.char == 'foo'
 
-    bar1.set_head_to(first_revision)
+    bar1.set_head(first_revision)
 
     assert bar1.char is None
     assert first_revision.is_head
@@ -84,7 +84,7 @@ def test_branching(db):
     bar1.char = 'foo'
     bar1.save()
 
-    bar1.set_head_to(first_revision)
+    bar1.set_head(first_revision)
 
     bar1.char = 'baz'
     bar1.save()
@@ -108,7 +108,7 @@ def test_specific_fields_option_change_head(db):
 
     assert baz1.char == 'foo'
 
-    baz1.set_head_to(first_revision)
+    baz1.set_head(first_revision)
 
     assert baz1.char is None
     assert first_revision.is_head
@@ -161,7 +161,7 @@ def test_head_change_signals(db):
     bar.save()
     with mock_signal_receiver(signals.pre_change_head) as pre_change_head:
         with mock_signal_receiver(signals.post_change_head) as post_change_head:
-            bar.set_head_to(bar.revisions.first())
+            bar.set_head(bar.revisions.first())
 
             assert pre_change_head.call_count == 1
             assert post_change_head.call_count == 1

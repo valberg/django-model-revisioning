@@ -1,3 +1,4 @@
+# coding: utf-8
 from django import template
 from django.forms import model_to_dict
 

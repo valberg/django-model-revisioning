@@ -15,6 +15,10 @@ Contents:
    :maxdepth: 2
 
    options
+   admin
+   signals
+   management
+   api
 
 Installation
 ------------

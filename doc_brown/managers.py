@@ -1,3 +1,4 @@
+# coding: utf-8
 from django.db import models
 
 
@@ -5,7 +6,7 @@ class RevisionedModelQuerySet(models.QuerySet):
     def update(self, **kwargs):
 
         for instance in self.all():
-            instance._create_revision(**kwargs)
+            instance.create_revision(**kwargs)
 
         super(RevisionedModelQuerySet, self).update(**kwargs)
 
