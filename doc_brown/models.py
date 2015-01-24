@@ -1,5 +1,3 @@
-import difflib
-
 from django.db import models
 from django.utils import six
 from django_extensions.db.fields import ShortUUIDField
@@ -138,36 +136,3 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
             instance=self,
             current_head=revision,
         )
-
-    def _field_diff(self, other, field):
-
-        # Get the field content from the respective instances.
-        # Check if they are None, if so then make them be an empty string
-        a = getattr(self, field) if getattr(self, field) else ''
-        b = getattr(other, field) if getattr(other, field) else ''
-
-        if type(a) != str or type(b) != str:
-            return None
-
-        if type(a) != list:
-            a = a.split('\n')
-
-        if type(b) != list:
-            b = b.split('\n')
-
-        if a == b:
-            return None
-
-        return difflib.ndiff(b, a)
-
-    def diff_field(self, other, field):
-        return self._field_diff(other, field)
-
-    def diff_all(self, other):
-        output = dict()
-        for field in self._get_fields():
-            field_diff = self._field_diff(other, field.name)
-            if field_diff:
-                output[field.name] = field_diff
-        return output
-
