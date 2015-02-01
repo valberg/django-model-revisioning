@@ -6,9 +6,10 @@ class RevisionOptions(object):
 
     AVAILABLE_OPTIONS = ['fields', 'soft_deletion']
 
-    def __init__(self, options):
+    def __init__(self, options=None):
         self.fields = '__all__'
         self.soft_deletion = False
+
         self.options = options
 
     def contribute_to_class(self, cls, name):

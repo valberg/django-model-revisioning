@@ -23,6 +23,9 @@ class Bar(RevisionModel):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True, auto_now=True)
 
+    user = models.ForeignKey('auth.User', null=True, blank=True)
+    groups = models.ForeignKey('auth.Group', null=True, blank=True)
+
     class Revisions:
         fields = '__all__'
 
@@ -45,3 +48,19 @@ class SoftDeleted(RevisionModel):
 
 class ModelWithoutOptions(RevisionModel):
     content = models.TextField()
+
+
+class SerializedRelatedModel(RevisionModel):
+    non_revisioned_foreign_key = models.ForeignKey(
+        NonRevisionedModel,
+        null=True, blank=True,
+        related_name='fk'
+    )
+    non_revisioned_many_to_many = models.ManyToManyField(
+        NonRevisionedModel,
+        null=True, blank=True,
+        related_name='many'
+    )
+
+    class Revisions:
+        related_strategy = 'serialize'

@@ -4,7 +4,7 @@ from django.utils import six
 from django_extensions.db.fields import ShortUUIDField
 
 from . import signals
-from .base import RevisionBase
+from .base import RevisionBase, excluded_field_names
 from .managers import RevisionedModelManager
 
 
@@ -14,6 +14,7 @@ class Revision(models.Model):
     id = ShortUUIDField(primary_key=True)
     revision_at = models.DateTimeField(auto_now_add=True)
     parent_revision = models.ForeignKey('self', null=True, blank=True)
+    is_head = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
@@ -24,14 +25,36 @@ class Revision(models.Model):
             self.is_head = False
         else:
             self.make_head()
+
+            related_fields = [
+                field for field in self._meta.fields
+                if field.name not in excluded_field_names and
+                (isinstance(field, models.ForeignKey) or
+                 isinstance(field, models.ManyToManyField))
+            ]
+            for field in related_fields:
+                pk = field.value_from_object(self)
+                if pk:
+                    # print(field.rel.to)
+                    # print(dir(field.rel.to))
+
+                    related_model_instance = \
+                        field.rel.to.revision_for_class.objects.get(pk=pk)
+
+                    if related_model_instance:
+                        print(related_model_instance)
+                        related_model_instance.save()
+                        setattr(self, field.name,
+                                related_model_instance.revisions.first())
+
         super(Revision, self).save(*args, **kwargs)
 
     def make_head(self):
         """ Make this revision to head. """
-        self.is_head = True
         current_head = self.revision_for.current_revision
         if current_head:
             current_head.save(remove_head=True)
+        self.is_head = True
 
     def __str__(self):
         return str(self.id)

@@ -1,4 +1,5 @@
 # coding: utf-8
+from django.core import serializers
 import pytest
 
 from mock_django import mock_signal_receiver
@@ -31,21 +32,17 @@ def test_revision_on_edit(db):
 
 def test_foreign_keys(db):
     non_revisioned_instance = models.NonRevisionedModel.objects.create()
-    bar1 = models.Bar.objects.create(
-        non_revisioned_foreign_key=non_revisioned_instance
-    )
-    assert bar1.revisions.count() == 1
 
-    bar1.non_revisioned_foreign_key = None
-    bar1.save()
-    assert bar1.revisions.count() == 2
+    bar = models.Bar.objects.create(
+        non_revisioned_foreign_key=non_revisioned_instance)
 
-    revision1 = bar1.revisions.first()
-    assert revision1.non_revisioned_foreign_key == non_revisioned_instance
+    assert bar.revisions.first().non_revisioned_foreign_key ==\
+        non_revisioned_instance.revisions.first()
 
-    non_revisioned_instance.delete()
+    bar.save()
 
-    assert bar1.revisions.count() == 2
+    assert bar.revisions.first().non_revisioned_foreign_key == \
+           non_revisioned_instance.revisions.first()
 
 
 def test_parent_revision(db):
@@ -165,3 +162,19 @@ def test_head_change_signals(db):
 
             assert pre_change_head.call_count == 1
             assert post_change_head.call_count == 1
+
+
+# def test_serialize_related_strategy(db):
+#     bar = models.SerializedRelatedModel.objects.create()
+#     non_revisioned_model = models.NonRevisionedModel(char='foobar')
+#     non_revisioned_model.save()
+#     serialized_non_revisioned_model = serializers.serialize(
+#         'json', [non_revisioned_model])
+#
+#     bar.non_revisioned_foreign_key = non_revisioned_model
+#     bar.save()
+#     print(non_revisioned_model)
+#     non_revisioned_model.delete()
+#
+#     assert bar.current_revision.non_revisioned_foreign_key_serialized\
+#         == serialized_non_revisioned_model
