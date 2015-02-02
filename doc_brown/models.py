@@ -35,9 +35,6 @@ class Revision(models.Model):
             for field in related_fields:
                 pk = field.value_from_object(self)
                 if pk:
-                    # print(field.rel.to)
-                    # print(dir(field.rel.to))
-
                     related_model_instance = \
                         field.rel.to.revision_for_class.objects.get(pk=pk)
 

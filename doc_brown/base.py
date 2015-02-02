@@ -5,7 +5,6 @@ from django.db import models
 from django.db.models import Field
 from django.db.models.base import ModelBase
 
-from .utils import revision_on_delete
 from .options import RevisionOptions
 
 excluded_field_names = ['revision_for', 'is_head', 'parent_revision']
@@ -30,8 +29,7 @@ class RevisionBase(ModelBase):
             revision_attrs.update(
                 {key: attrs[key] for key in new_class._revisions.fields})
 
-            revision_class = mcs._create_revisions_model(
-                name, revision_attrs, new_class)
+            mcs._create_revisions_model(name, revision_attrs, new_class)
 
         if new_class._revisions.soft_deletion:
             new_class.add_to_class(
@@ -69,23 +67,7 @@ class RevisionBase(ModelBase):
         )
         revision_for.revision_class = revision_class
 
-        # if handle_related and related_fields and\
-        #         revision_for._revisions.related_strategy == 'serialize':
-        #     mcs._add_serialize_fields(revision_class, related_fields)
-
         return revision_class
-
-    # @classmethod
-    # def _add_serialize_fields(mcs, cls, fields):
-    #     for field in fields:
-    #         field.null = True
-    #         field.blank = True
-    #         field.rel.on_delete = revision_on_delete
-    #         new_field_name = field.name + '_serialized'
-    #         cls.add_to_class(new_field_name,
-    #                          models.TextField(new_field_name,
-    #                                           null=True,
-    #                                           blank=True))
 
     @classmethod
     def _handle_related_models(mcs, fields, attrs, cls):
@@ -126,12 +108,11 @@ class RevisionBase(ModelBase):
                 def monkey_save(self, *args, **kwargs):
                     old_save(self, *args, **kwargs)
                     data = self._get_instance_data()
-                    rev = self.revision_class.objects.create(
+                    self.revision_class.objects.create(
                         revision_for=self, **data
                     )
 
                 related_model.save = monkey_save
-
                 mcs.revision_model_by_model[related_model] = revision_class
             else:
                 revision_class = mcs.revision_model_by_model[related_model]
