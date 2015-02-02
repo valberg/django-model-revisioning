@@ -36,13 +36,13 @@ def test_foreign_keys(db):
     bar = models.Bar.objects.create(
         non_revisioned_foreign_key=non_revisioned_instance)
 
-    assert bar.revisions.first().non_revisioned_foreign_key ==\
-        non_revisioned_instance.revisions.first()
+    assert bar.revisions.last().non_revisioned_foreign_key ==\
+        non_revisioned_instance.current_revision
 
     bar.save()
 
-    assert bar.revisions.first().non_revisioned_foreign_key == \
-           non_revisioned_instance.revisions.first()
+    assert bar.revisions.last().non_revisioned_foreign_key == \
+        non_revisioned_instance.current_revision
 
 
 def test_parent_revision(db):
@@ -162,19 +162,3 @@ def test_head_change_signals(db):
 
             assert pre_change_head.call_count == 1
             assert post_change_head.call_count == 1
-
-
-# def test_serialize_related_strategy(db):
-#     bar = models.SerializedRelatedModel.objects.create()
-#     non_revisioned_model = models.NonRevisionedModel(char='foobar')
-#     non_revisioned_model.save()
-#     serialized_non_revisioned_model = serializers.serialize(
-#         'json', [non_revisioned_model])
-#
-#     bar.non_revisioned_foreign_key = non_revisioned_model
-#     bar.save()
-#     print(non_revisioned_model)
-#     non_revisioned_model.delete()
-#
-#     assert bar.current_revision.non_revisioned_foreign_key_serialized\
-#         == serialized_non_revisioned_model

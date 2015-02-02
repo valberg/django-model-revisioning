@@ -39,10 +39,9 @@ class Revision(models.Model):
                         field.rel.to.revision_for_class.objects.get(pk=pk)
 
                     if related_model_instance:
-                        print(related_model_instance)
                         related_model_instance.save()
                         setattr(self, field.name,
-                                related_model_instance.revisions.first())
+                                related_model_instance.current_revision)
 
         super(Revision, self).save(*args, **kwargs)
 

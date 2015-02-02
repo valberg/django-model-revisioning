@@ -44,14 +44,15 @@ class RevisionBase(ModelBase):
         new_class_name = name + 'Revision'
         attrs['__qualname__'] = new_class_name
 
-        from .models import Revision
+        from .models import Revision, RevisionModel
         bases = (Revision,)
 
         related_fields = [
-            field for field in revision_for._meta.fields
-            if field.name not in excluded_field_names and
-            (isinstance(field, models.ForeignKey) or
-             isinstance(field, models.ManyToManyField))
+            deepcopy(field) for field in revision_for._meta.fields
+            if field.name not in excluded_field_names
+            and (isinstance(field, models.ForeignKey) or
+                 isinstance(field, models.ManyToManyField))
+            and not issubclass(RevisionModel, field.rel.to)
         ]
 
         if handle_related and related_fields:
@@ -71,17 +72,22 @@ class RevisionBase(ModelBase):
 
     @classmethod
     def _handle_related_models(mcs, fields, attrs, cls):
+        from .models import RevisionModel
         for field in fields:
             related_model = field.rel.to
 
             if related_model not in mcs.revision_model_by_model:
 
                 new_attrs = {
-                    field.name: field
+                    field.name: deepcopy(field)
                     for field in related_model._meta.fields
                     if isinstance(field, models.Field)
                     and field.name != 'id'
                 }
+
+                for attr in new_attrs.values():
+                    if attr.unique:
+                        attr._unique = False
 
                 new_attrs['__module__'] = cls.__module__
 
@@ -98,9 +104,10 @@ class RevisionBase(ModelBase):
                 related_model.revision_class = revision_class
                 revision_class.revision_for_class = related_model
 
+                # Monkey patching the non-revisioned model so it
+                # actually becomes revisioned.
                 old_save = deepcopy(related_model.save)
 
-                from .models import RevisionModel
                 related_model.current_revision = RevisionModel.current_revision
                 related_model._get_instance_data =\
                     RevisionModel._get_instance_data
@@ -108,7 +115,7 @@ class RevisionBase(ModelBase):
                 def monkey_save(self, *args, **kwargs):
                     old_save(self, *args, **kwargs)
                     data = self._get_instance_data()
-                    self.revision_class.objects.create(
+                    rev = self.revision_class.objects.create(
                         revision_for=self, **data
                     )
 
@@ -117,26 +124,7 @@ class RevisionBase(ModelBase):
             else:
                 revision_class = mcs.revision_model_by_model[related_model]
 
-            new_field = None
-
-            if isinstance(field, models.ForeignKey):
-                new_field = models.ForeignKey(
-                    revision_class,
-                    related_name=field.related.get_accessor_name(),
-                    verbose_name=field.verbose_name,
-                    null=True,
-                    blank=True,
-                )
-            elif isinstance(field, models.ManyToManyField):
-                new_field = models.ManyToManyField(
-                    revision_class,
-                    related_name=field.related.get_accessor_name(),
-                    verbose_name=field.verbose_name,
-                    through=field.through,
-                    null=True,
-                    blank=True,
-                )
-
-            attrs[field.name] = new_field
+            field.rel.to = revision_class
+            attrs[field.name] = field
 
         return attrs

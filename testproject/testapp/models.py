@@ -26,6 +26,9 @@ class Bar(RevisionModel):
     user = models.ForeignKey('auth.User', null=True, blank=True)
     groups = models.ForeignKey('auth.Group', null=True, blank=True)
 
+    # TODO: Get this to work:
+    # parent_bar = models.ForeignKey('self', null=True, blank=True)
+
     class Revisions:
         fields = '__all__'
 
