@@ -53,6 +53,7 @@ class RevisionBase(ModelBase):
             and (isinstance(field, models.ForeignKey) or
                  isinstance(field, models.ManyToManyField))
             and not issubclass(RevisionModel, field.rel.to)
+            and not field.rel.to == revision_for
         ]
 
         if handle_related and related_fields:
@@ -67,6 +68,14 @@ class RevisionBase(ModelBase):
             models.ForeignKey(revision_for, related_name='revisions'),
         )
         revision_for.revision_class = revision_class
+
+        self_referrers = [deepcopy(field) for field in revision_for._meta.fields
+                          if (isinstance(field, models.ForeignKey) or
+                              isinstance(field, models.ManyToManyField))
+                          and field.rel.to == revision_for]
+
+        for field in self_referrers:
+            field.rel.to = revision_class
 
         return revision_class
 
