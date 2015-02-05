@@ -44,7 +44,7 @@ class RevisionBase(ModelBase):
         new_class_name = name + 'Revision'
         attrs['__qualname__'] = new_class_name
 
-        from .models import Revision, RevisionModel
+        from .models import Revision
         bases = (Revision,)
 
         related_fields = [
@@ -52,13 +52,22 @@ class RevisionBase(ModelBase):
             if field.name not in excluded_field_names
             and (isinstance(field, models.ForeignKey) or
                  isinstance(field, models.ManyToManyField))
-            and not issubclass(RevisionModel, field.rel.to)
             and not field.rel.to == revision_for
+        ]
+
+        self_referrers = [
+            deepcopy(field) for field in revision_for._meta.fields
+            if (isinstance(field, models.ForeignKey) or
+                isinstance(field, models.ManyToManyField))
+            and field.rel.to == revision_for
         ]
 
         if handle_related and related_fields:
             attrs = mcs._handle_related_models(
                 related_fields, attrs, revision_for)
+
+        for field in self_referrers:
+            del attrs[field.name]
 
         attrs['__module__'] = module if module else revision_for.__module__
 
@@ -68,14 +77,14 @@ class RevisionBase(ModelBase):
             models.ForeignKey(revision_for, related_name='revisions'),
         )
         revision_for.revision_class = revision_class
-
-        self_referrers = [deepcopy(field) for field in revision_for._meta.fields
-                          if (isinstance(field, models.ForeignKey) or
-                              isinstance(field, models.ManyToManyField))
-                          and field.rel.to == revision_for]
+        revision_class.revision_for_class = revision_for
 
         for field in self_referrers:
+            field.model = revision_class
             field.rel.to = revision_class
+            revision_class.add_to_class(field.name, field)
+
+        mcs.revision_model_by_model[revision_for] = revision_class
 
         return revision_class
 

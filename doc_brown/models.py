@@ -13,7 +13,8 @@ class Revision(models.Model):
 
     id = ShortUUIDField(primary_key=True)
     revision_at = models.DateTimeField(auto_now_add=True)
-    parent_revision = models.ForeignKey('self', null=True, blank=True)
+    parent_revision = models.ForeignKey('self', null=True, blank=True,
+                                        related_name='children_revisions')
     is_head = models.BooleanField(default=False)
 
     class Meta:
@@ -38,10 +39,12 @@ class Revision(models.Model):
                     related_model_instance = \
                         field.rel.to.revision_for_class.objects.get(pk=pk)
 
-                    if related_model_instance:
+                    if related_model_instance and not isinstance(
+                            self.revision_for, field.rel.to):
                         related_model_instance.save()
-                        setattr(self, field.name,
-                                related_model_instance.current_revision)
+
+                    setattr(self, field.name,
+                            related_model_instance.current_revision)
 
         super(Revision, self).save(*args, **kwargs)
 

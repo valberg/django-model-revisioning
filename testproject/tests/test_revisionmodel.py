@@ -45,6 +45,11 @@ def test_foreign_keys(db):
         non_revisioned_instance.current_revision
 
 
+def test_self_referral(db):
+    bar1 = models.Bar.objects.create()
+    bar2 = models.Bar.objects.create(parent_bar=bar1)
+    assert bar2.current_revision.parent_bar == bar1.current_revision
+
 def test_parent_revision(db):
     bar1 = models.Bar.objects.create()
 
