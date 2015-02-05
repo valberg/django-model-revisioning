@@ -4,6 +4,8 @@ from copy import deepcopy
 from django.db import models
 from django.db.models import Field
 from django.db.models.base import ModelBase
+from django.utils.six import get_unbound_function
+
 
 from .options import RevisionOptions
 
@@ -124,16 +126,16 @@ class RevisionBase(ModelBase):
 
                 # Monkey patching the non-revisioned model so it
                 # actually becomes revisioned.
-                old_save = deepcopy(related_model.save)
+                old_save = get_unbound_function(related_model.save)
 
                 related_model.current_revision = RevisionModel.current_revision
                 related_model._get_instance_data =\
-                    RevisionModel._get_instance_data
+                    get_unbound_function(RevisionModel._get_instance_data)
 
                 def monkey_save(self, *args, **kwargs):
                     old_save(self, *args, **kwargs)
                     data = self._get_instance_data()
-                    rev = self.revision_class.objects.create(
+                    self.revision_class.objects.create(
                         revision_for=self, **data
                     )
 
