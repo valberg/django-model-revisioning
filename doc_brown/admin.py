@@ -48,7 +48,7 @@ class RevisionModelAdmin(ModelAdmin):
             revisions = None
 
         context = dict(
-            self.admin_site.each_context(),
+            self.admin_site.each_context(request),
             title=_('Revisions: %s') % force_text(obj),
             module_name=capfirst(force_text(opts.verbose_name_plural)),
             object=obj,
