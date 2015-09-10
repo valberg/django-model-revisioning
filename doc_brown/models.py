@@ -11,10 +11,24 @@ from .managers import RevisionedModelManager
 class Revision(models.Model):
     """ Model for revisions. """
 
+    # TODO: Using Django's built-in UUIDField would be nice
+    # The problem is that it gets represented as 'uuid' in the db,
+    # and that yields a
+    #   "No operator matches the given name and argument type(s).
+    #   You might need to add explicit type casts."
+    # One solution might be to force subclasses of RevisionModel to have
+    # UUIDField as primary key - this way both the original model and the
+    # revision would have the same pk.
     id = ShortUUIDField(primary_key=True)
     revision_at = models.DateTimeField(auto_now_add=True)
-    parent_revision = models.ForeignKey('self', null=True, blank=True,
-                                        related_name='children_revisions')
+
+    parent_revision = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        related_name='children_revisions'
+    )
+
     is_head = models.BooleanField(default=False)
 
     class Meta:
@@ -28,23 +42,30 @@ class Revision(models.Model):
             self.make_head()
 
             related_fields = [
-                field for field in self._meta.fields
-                if field.name not in excluded_field_names and
-                (isinstance(field, models.ForeignKey) or
-                 isinstance(field, models.ManyToManyField))
+                field for field in self._meta.get_fields()
+                if field.name not in excluded_field_names and (
+                    field.is_relation and not field.auto_created
+                )
             ]
+
             for field in related_fields:
                 pk = field.value_from_object(self)
                 if pk:
-                    related_model_instance = \
+                    related_model_instance = (
                         field.rel.to.revision_for_class.objects.get(pk=pk)
+                    )
 
-                    if related_model_instance and not isinstance(
-                            self.revision_for, field.rel.to):
+                    if (
+                        related_model_instance and
+                        not isinstance(self.revision_for, field.rel.to)
+                    ):
                         related_model_instance.save()
 
-                    setattr(self, field.name,
-                            related_model_instance.current_revision)
+                    setattr(
+                        self,
+                        field.name,
+                        related_model_instance.current_revision
+                    )
 
         super(Revision, self).save(*args, **kwargs)
 
