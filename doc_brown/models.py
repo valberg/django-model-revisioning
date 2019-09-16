@@ -4,7 +4,8 @@ from django.utils import six
 from django_extensions.db.fields import ShortUUIDField
 
 from . import signals
-from .base import RevisionBase, excluded_field_names
+from .base import excluded_field_names
+from .base import RevisionBase
 from .managers import RevisionedModelManager
 
 
@@ -23,49 +24,41 @@ class Revision(models.Model):
     revision_at = models.DateTimeField(auto_now_add=True)
 
     parent_revision = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        related_name='children_revisions'
+        "self", null=True, blank=True, related_name="children_revisions"
     )
 
     is_head = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
-        ordering = ['revision_at']
+        ordering = ["revision_at"]
 
     def save(self, *args, **kwargs):
-        if kwargs.pop('remove_head', None):
+        if kwargs.pop("remove_head", None):
             self.is_head = False
         else:
             self.make_head()
 
             related_fields = [
-                field for field in self._meta.get_fields()
-                if field.name not in excluded_field_names and (
-                    field.is_relation and not field.auto_created
-                )
+                field
+                for field in self._meta.get_fields()
+                if field.name not in excluded_field_names
+                and (field.is_relation and not field.auto_created)
             ]
 
             for field in related_fields:
                 pk = field.value_from_object(self)
                 if pk:
-                    related_model_instance = (
-                        field.rel.to.revision_for_class.objects.get(pk=pk)
+                    related_model_instance = field.rel.to.revision_for_class.objects.get(
+                        pk=pk
                     )
 
-                    if (
-                        related_model_instance and
-                        not isinstance(self.revision_for, field.rel.to)
+                    if related_model_instance and not isinstance(
+                        self.revision_for, field.rel.to
                     ):
                         related_model_instance.save()
 
-                    setattr(
-                        self,
-                        field.name,
-                        related_model_instance.current_revision
-                    )
+                    setattr(self, field.name, related_model_instance.current_revision)
 
         super(Revision, self).save(*args, **kwargs)
 
@@ -102,7 +95,7 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
                 # Get the value of the field and add it to the dict
                 field_name = field.name
                 if isinstance(field, models.ForeignKey):
-                    field_name += '_id'
+                    field_name += "_id"
                 data[field_name] = field.value_from_object(self)
         return data
 
@@ -118,28 +111,21 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
         if kwargs:
             data = kwargs
 
-        signals.pre_revision.send(
-            sender=self.__class__,
-            instance=self,
-        )
+        signals.pre_revision.send(sender=self.__class__, instance=self)
 
         new_revision = self.revisions.create(
-            revision_for=self,
-            parent_revision=self.current_revision,
-            **data
+            revision_for=self, parent_revision=self.current_revision, **data
         )
 
         signals.post_revision.send(
-            sender=self.__class__,
-            instance=self,
-            revision=new_revision
+            sender=self.__class__, instance=self, revision=new_revision
         )
 
         return new_revision
 
     def save(self, *args, **kwargs):
-        changing_head = kwargs.pop('changing_head', False)
-        soft_deletion = kwargs.pop('soft_deletion', False)
+        changing_head = kwargs.pop("changing_head", False)
+        soft_deletion = kwargs.pop("soft_deletion", False)
 
         if not changing_head:
             if soft_deletion:
@@ -183,12 +169,14 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
 
         if revision.revision_for != self:
             raise Exception(
-                'The given revision ({}) is not a revision of '
-                'this instance ({})'.format(revision, self)
+                "The given revision ({}) is not a revision of "
+                "this instance ({})".format(revision, self)
             )
 
-        fields = {field: self._meta.get_field(field).value_from_object(revision)
-                  for field in self._revisions.fields}
+        fields = {
+            field: self._meta.get_field(field).value_from_object(revision)
+            for field in self._revisions.fields
+        }
 
         for name, value in fields.items():
             setattr(self, name, value)
@@ -198,10 +186,7 @@ class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
         revision.save()
 
         signals.post_change_head.send(
-            sender=self.__class__,
-            instance=self,
-            old_head=old_head,
-            new_head=revision,
+            sender=self.__class__, instance=self, old_head=old_head, new_head=revision
         )
 
     def revisions_count(self):

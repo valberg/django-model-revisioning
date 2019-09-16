@@ -1,31 +1,32 @@
 # coding: utf-8
-from django.core.management import BaseCommand, CommandError
 from django.apps import apps
+from django.core.management import BaseCommand
+from django.core.management import CommandError
 
 
 class Command(BaseCommand):
 
-    args = '<model_path:label> <pk> <output>'
-    help = 'Draw a graph over revisions for a given instance'
+    args = "<model_path:label> <pk> <output>"
+    help = "Draw a graph over revisions for a given instance"
 
     def handle(self, *args, **options):
         try:
-            import networkx as nx
+            import networkx as nx  # noqa
         except ImportError:
-            raise CommandError('networkx not installed.')
+            raise CommandError("networkx not installed.")
 
         try:
             from graphviz import Digraph
         except ImportError:
-            raise CommandError('graphviz not installed.')
+            raise CommandError("graphviz not installed.")
 
         model_path, pk, output = args
-        app_name, model_name = model_path.split('.')
-        model_name = model_name.split(':')
+        app_name, model_name = model_path.split(".")
+        model_name = model_name.split(":")
         if len(model_name) == 2:
             label = model_name[1]
         else:
-            label = 'pk'
+            label = "pk"
         model_name = model_name[0]
 
         app_config = apps.get_app_config(app_name)
@@ -40,5 +41,5 @@ class Command(BaseCommand):
             if revision.parent_revision:
                 graph.edge(revision.parent_revision.pk, revision.pk)
 
-        graph.format = 'png'
-        graph.render(filename='{}.gv'.format(output))
+        graph.format = "png"
+        graph.render(filename="{}.gv".format(output))

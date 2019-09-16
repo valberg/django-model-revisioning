@@ -10,31 +10,31 @@ from django.utils.translation import gettext_lazy as _
 
 
 class RevisionModelAdmin(ModelAdmin):
-    change_form_template = 'doc_brown/change_form.html'
+    change_form_template = "doc_brown/change_form.html"
 
     def get_urls(self):
         from django.conf.urls import url
+
         urlpatterns = super(RevisionModelAdmin, self).get_urls()
         info = self.model._meta.app_label, self.model._meta.model_name
 
-        urlpatterns = [url(
-            r'^(.+)/revisions/$',
-            self.admin_site.admin_view(self.revisions_view),
-            name='%s_%s_revisions' % info
-        )] + urlpatterns
+        urlpatterns = [
+            url(
+                r"^(.+)/revisions/$",
+                self.admin_site.admin_view(self.revisions_view),
+                name="%s_%s_revisions" % info,
+            )
+        ] + urlpatterns
 
         return urlpatterns
 
     def revisions_view(self, request, object_id, extra_context=None):
 
         model = self.model
-        obj = get_object_or_404(
-            self.get_queryset(request),
-            pk=unquote(object_id)
-        )
+        obj = get_object_or_404(self.get_queryset(request), pk=unquote(object_id))
 
         if request.POST:
-            revision_id = request.POST.get('revision_id', None)
+            revision_id = request.POST.get("revision_id", None)
             obj.set_head(revision_id)
 
         if not self.has_change_permission(request, obj):
@@ -49,7 +49,7 @@ class RevisionModelAdmin(ModelAdmin):
 
         context = dict(
             self.admin_site.each_context(request),
-            title=_('Revisions: %s') % force_text(obj),
+            title=_("Revisions: %s") % force_text(obj),
             module_name=capfirst(force_text(opts.verbose_name_plural)),
             object=obj,
             opts=opts,
@@ -59,5 +59,9 @@ class RevisionModelAdmin(ModelAdmin):
         )
 
         context.update(extra_context or {})
-        return TemplateResponse(request, 'doc_brown/revisions.html', context,
-                                current_app=self.admin_site.name)
+        return TemplateResponse(
+            request,
+            "doc_brown/revisions.html",
+            context,
+            current_app=self.admin_site.name,
+        )

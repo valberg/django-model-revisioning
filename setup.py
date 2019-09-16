@@ -1,8 +1,9 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages
+from setuptools import setup
 
 VERSION = "0.1.0"
 
-with open('requirements/base.txt') as f:
+with open("requirements/base.txt") as f:
     requirements = f.readlines()
 
 setup(

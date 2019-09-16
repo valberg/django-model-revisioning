@@ -6,22 +6,22 @@ python:
   - "3.7"
   - "3.6"
   - "3.5"
-  
+
 services:
   - postgresql
-  
+
 addons:
   postgresql: "9.6"
-  
+
 install:
   - pip install -r requirements/dev.txt
-  
+
 before_script:
   - psql -c "create database docbrown;" -U postgres
   - psql -c "create role docbrown with login password 'docbrown' createdb;" -U postgres
   - ./testproject/manage.py makemigrations
-  
+
 script: py.test --cov=doc_brown testproject --create-db
 
-after_success: 
+after_success:
   - codecov

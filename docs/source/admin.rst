@@ -22,4 +22,3 @@ extend the admin as usual::
         list_display = ('char', 'current_revision', 'revisions_count')
 
     admin.site.register(Bar, BarAdmin)
-

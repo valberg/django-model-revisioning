@@ -1,12 +1,8 @@
 # coding: utf-8
-from django.core import serializers
-import pytest
-
 from mock_django import mock_signal_receiver
+from testapp import models
 
 from doc_brown import signals
-
-from testapp import models
 
 
 def test_revision_on_edit(db):
@@ -14,13 +10,13 @@ def test_revision_on_edit(db):
     assert bar1.id
     assert bar1.revisions.count() == 1
 
-    bar1.char = 'Bar1'
+    bar1.char = "Bar1"
     bar1.save()
     assert bar1.revisions.count() == 2
 
-    text_body = 'Integer posuere erat a ante venenatis dapibus posuere velit aliquet.'
+    text_body = "Integer posuere erat a ante venenatis dapibus posuere velit aliquet."
 
-    bar1.char = 'Bar1 updated'
+    bar1.char = "Bar1 updated"
     bar1.text = text_body
     bar1.save()
 
@@ -33,16 +29,19 @@ def test_revision_on_edit(db):
 def test_foreign_keys(db):
     non_revisioned_instance = models.NonRevisionedModel.objects.create()
 
-    bar = models.Bar.objects.create(
-        non_revisioned_foreign_key=non_revisioned_instance)
+    bar = models.Bar.objects.create(non_revisioned_foreign_key=non_revisioned_instance)
 
-    assert bar.revisions.last().non_revisioned_foreign_key ==\
-        non_revisioned_instance.current_revision
+    assert (
+        bar.revisions.last().non_revisioned_foreign_key
+        == non_revisioned_instance.current_revision
+    )
 
     bar.save()
 
-    assert bar.revisions.last().non_revisioned_foreign_key == \
-        non_revisioned_instance.current_revision
+    assert (
+        bar.revisions.last().non_revisioned_foreign_key
+        == non_revisioned_instance.current_revision
+    )
 
 
 def test_self_referral(db):
@@ -50,13 +49,14 @@ def test_self_referral(db):
     bar2 = models.Bar.objects.create(parent_bar=bar1)
     assert bar2.current_revision.parent_bar == bar1.current_revision
 
+
 def test_parent_revision(db):
     bar1 = models.Bar.objects.create()
 
     first_revision = bar1.current_revision
     assert first_revision.parent_revision is None
 
-    bar1.char = 'foo'
+    bar1.char = "foo"
     bar1.save()
 
     assert bar1.current_revision != first_revision
@@ -68,10 +68,10 @@ def test_change_head(db):
 
     first_revision = bar1.revisions.get()
 
-    bar1.char = 'foo'
+    bar1.char = "foo"
     bar1.save()
 
-    assert bar1.char == 'foo'
+    assert bar1.char == "foo"
 
     bar1.set_head(first_revision)
 
@@ -83,12 +83,12 @@ def test_branching(db):
     bar1 = models.Bar.objects.create()
     first_revision = bar1.revisions.get()
 
-    bar1.char = 'foo'
+    bar1.char = "foo"
     bar1.save()
 
     bar1.set_head(first_revision)
 
-    bar1.char = 'baz'
+    bar1.char = "baz"
     bar1.save()
 
     assert bar1.revisions.filter(parent_revision=first_revision).count() == 2
@@ -97,7 +97,7 @@ def test_branching(db):
 def test_specific_fields_option(db):
     baz1 = models.Baz.objects.create()
     first_revision = baz1.revisions.get()
-    assert not hasattr(first_revision, 'int')
+    assert not hasattr(first_revision, "int")
 
 
 def test_specific_fields_option_change_head(db):
@@ -105,10 +105,10 @@ def test_specific_fields_option_change_head(db):
 
     first_revision = baz1.revisions.get()
 
-    baz1.char = 'foo'
+    baz1.char = "foo"
     baz1.save()
 
-    assert baz1.char == 'foo'
+    assert baz1.char == "foo"
 
     baz1.set_head(first_revision)
 
@@ -129,7 +129,7 @@ def test_soft_deletion(db):
 
 def test_model_without_options(db):
     without_options = models.ModelWithoutOptions()
-    assert without_options._revisions.fields == ['content']
+    assert without_options._revisions.fields == ["content"]
     assert without_options._revisions.soft_deletion is False
 
 
@@ -137,13 +137,13 @@ def test_revision_on_update(db):
     bar1 = models.Bar.objects.create()
     bar2 = models.Bar.objects.create()
 
-    models.Bar.objects.all().update(char='foo')
+    models.Bar.objects.all().update(char="foo")
 
     assert bar1.revisions.count() == 2
     assert bar2.revisions.count() == 2
 
-    assert bar1.revisions.filter(char='foo').count() == 1
-    assert bar2.revisions.filter(char='foo').count() == 1
+    assert bar1.revisions.filter(char="foo").count() == 1
+    assert bar2.revisions.filter(char="foo").count() == 1
 
 
 def test_revision_creation_signals(db):
@@ -153,13 +153,13 @@ def test_revision_creation_signals(db):
             assert pre_revision.call_count == 1
             assert post_revision.call_count == 1
 
-            bar.char = 'foo'
+            bar.char = "foo"
             bar.save()
 
 
 def test_head_change_signals(db):
     bar = models.Bar.objects.create()
-    bar.char = 'foo'
+    bar.char = "foo"
     bar.save()
     with mock_signal_receiver(signals.pre_change_head) as pre_change_head:
         with mock_signal_receiver(signals.post_change_head) as post_change_head:
