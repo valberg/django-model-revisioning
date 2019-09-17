@@ -1,5 +1,4 @@
-django-doc-brown
-================
+# django-model-history
 
 Version control for django models (experimental)
 
