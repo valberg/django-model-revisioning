@@ -1,4 +1,3 @@
-# coding: utf-8
 from copy import deepcopy
 
 from django.db import models
@@ -15,7 +14,12 @@ class RevisionBase(ModelBase):
 
     revision_model_by_model = {}
 
-    def __new__(mcs, name, bases, attrs):
+    def __new__(mcs, name, bases, attrs, **kwargs):
+
+        # import pdb; pdb.set_trace()
+
+        if name == "RevisionModel":
+            return super(RevisionBase, mcs).__new__(mcs, name, bases, attrs)
 
         revision_attrs = deepcopy(attrs)
 
@@ -61,7 +65,7 @@ class RevisionBase(ModelBase):
                 isinstance(field, models.ForeignKey)
                 or isinstance(field, models.ManyToManyField)
             )
-            and not field.rel.to == revision_for
+            and not field.remote_field.model == revision_for
         ]
 
         self_referrers = [
@@ -71,7 +75,7 @@ class RevisionBase(ModelBase):
                 isinstance(field, models.ForeignKey)
                 or isinstance(field, models.ManyToManyField)
             )
-            and field.rel.to == revision_for
+            and field.remote_field.model == revision_for
         ]
 
         if handle_related and related_fields:
@@ -84,14 +88,17 @@ class RevisionBase(ModelBase):
 
         revision_class = super_new(mcs, new_class_name, bases, attrs)
         revision_class.add_to_class(
-            "revision_for", models.ForeignKey(revision_for, related_name="revisions")
+            "revision_for",
+            models.ForeignKey(
+                revision_for, related_name="revisions", on_delete=models.CASCADE
+            ),
         )
         revision_for.revision_class = revision_class
         revision_class.revision_for_class = revision_for
 
         for field in self_referrers:
             field.model = revision_class
-            field.rel.to = revision_class
+            field.remote_field.model = revision_class
             revision_class.add_to_class(field.name, field)
 
         mcs.revision_model_by_model[revision_for] = revision_class
@@ -103,9 +110,11 @@ class RevisionBase(ModelBase):
         from .models import RevisionModel
 
         for field in fields:
-            related_model = field.rel.to
+            related_model = field.remote_field.model
 
             if related_model not in mcs.revision_model_by_model:
+
+                print(related_model)
 
                 new_attrs = {
                     field.name: deepcopy(field)
@@ -151,7 +160,7 @@ class RevisionBase(ModelBase):
             else:
                 revision_class = mcs.revision_model_by_model[related_model]
 
-            field.rel.to = revision_class
+            field.remote_field.model = revision_class
             attrs[field.name] = field
 
         return attrs

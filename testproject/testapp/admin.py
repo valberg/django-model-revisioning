@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from . import models
-from doc_brown.admin import RevisionModelAdmin
+from model_history.admin import RevisionModelAdmin
 
 
 class BarAdmin(RevisionModelAdmin):

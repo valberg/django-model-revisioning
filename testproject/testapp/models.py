@@ -1,6 +1,6 @@
 from django.db import models
 
-from doc_brown.models import RevisionModel
+from model_history.models import RevisionModel
 
 
 class NonRevisionedModel(models.Model):
@@ -17,17 +17,23 @@ class Bar(RevisionModel):
     hello_world = models.CharField(max_length=255, null=True, blank=True)
 
     non_revisioned_foreign_key = models.ForeignKey(
-        "testapp.NonRevisionedModel", null=True, blank=True
+        NonRevisionedModel, null=True, blank=True, on_delete=models.CASCADE
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True, auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    user = models.ForeignKey("auth.User", null=True, blank=True)
-    groups = models.ForeignKey("auth.Group", null=True, blank=True)
+    user = models.ForeignKey(
+        "auth.User", null=True, blank=True, on_delete=models.CASCADE
+    )
+    groups = models.ForeignKey(
+        "auth.Group", null=True, blank=True, on_delete=models.CASCADE
+    )
 
     # TODO: Get this to work:
-    parent_bar = models.ForeignKey("self", null=True, blank=True)
+    parent_bar = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.CASCADE
+    )
 
     class Revisions:
         fields = "__all__"
@@ -55,10 +61,14 @@ class ModelWithoutOptions(RevisionModel):
 
 class SerializedRelatedModel(RevisionModel):
     non_revisioned_foreign_key = models.ForeignKey(
-        NonRevisionedModel, null=True, blank=True, related_name="fk"
+        NonRevisionedModel,
+        null=True,
+        blank=True,
+        related_name="fk",
+        on_delete=models.CASCADE,
     )
     non_revisioned_many_to_many = models.ManyToManyField(
-        NonRevisionedModel, null=True, blank=True, related_name="many"
+        NonRevisionedModel, blank=True, related_name="many"
     )
 
     class Revisions:

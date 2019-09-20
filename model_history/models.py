@@ -1,7 +1,6 @@
-# coding: utf-8
+import uuid
+
 from django.db import models
-from django.utils import six
-from django_extensions.db.fields import ShortUUIDField
 
 from . import signals
 from .base import excluded_field_names
@@ -12,19 +11,15 @@ from .managers import ModelHistoryManager
 class Revision(models.Model):
     """ Model for revisions. """
 
-    # TODO: Using Django's built-in UUIDField would be nice
-    # The problem is that it gets represented as 'uuid' in the db,
-    # and that yields a
-    #   "No operator matches the given name and argument type(s).
-    #   You might need to add explicit type casts."
-    # One solution might be to force subclasses of RevisionModel to have
-    # UUIDField as primary key - this way both the original model and the
-    # revision would have the same pk.
-    id = ShortUUIDField(primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     revision_at = models.DateTimeField(auto_now_add=True)
 
     parent_revision = models.ForeignKey(
-        "self", null=True, blank=True, related_name="children_revisions"
+        "self",
+        null=True,
+        blank=True,
+        related_name="children_revisions",
+        on_delete=models.PROTECT,
     )
 
     is_head = models.BooleanField(default=False)
@@ -49,12 +44,12 @@ class Revision(models.Model):
             for field in related_fields:
                 pk = field.value_from_object(self)
                 if pk:
-                    related_model_instance = field.rel.to.revision_for_class.objects.get(
+                    related_model_instance = field.remote_field.model.revision_for_class.objects.get(
                         pk=pk
                     )
 
                     if related_model_instance and not isinstance(
-                        self.revision_for, field.rel.to
+                        self.revision_for, field.remote_field.model
                     ):
                         related_model_instance.save()
 
@@ -73,7 +68,7 @@ class Revision(models.Model):
         return str(self.id)
 
 
-class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
+class RevisionModel(models.Model, metaclass=RevisionBase):
     """ Model to inherit from to enable revisioning. """
 
     objects = ModelHistoryManager()

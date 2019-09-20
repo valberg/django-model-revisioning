@@ -13,15 +13,17 @@ services:
 addons:
   postgresql: "9.6"
 
+before_install:
+  - pip install poetry
 install:
-  - pip install -r requirements/dev.txt
+  - poetry install
 
 before_script:
   - psql -c "create database docbrown;" -U postgres
   - psql -c "create role docbrown with login password 'docbrown' createdb;" -U postgres
   - ./testproject/manage.py makemigrations
 
-script: py.test --cov=doc_brown testproject --create-db
+script: py.test --cov=model_history testproject
 
 after_success:
-  - codecov
+  - poetry run codecov

@@ -1,9 +1,11 @@
 *.sw*
 db.sqlite3
 .idea/
-django_doc_brown.egg-info/
 __pycache__/
 *.pyc
 docs/build/
 .coverage
 htmlcov/
+dist/
+django_model_history.egg-info/
+venv/
