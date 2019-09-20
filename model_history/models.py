@@ -6,7 +6,7 @@ from django_extensions.db.fields import ShortUUIDField
 from . import signals
 from .base import excluded_field_names
 from .base import RevisionBase
-from .managers import RevisionedModelManager
+from .managers import ModelHistoryManager
 
 
 class Revision(models.Model):
@@ -76,7 +76,7 @@ class Revision(models.Model):
 class RevisionModel(six.with_metaclass(RevisionBase, models.Model)):
     """ Model to inherit from to enable revisioning. """
 
-    objects = RevisionedModelManager()
+    objects = ModelHistoryManager()
 
     class Meta:
         abstract = True
