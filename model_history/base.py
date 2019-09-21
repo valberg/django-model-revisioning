@@ -3,7 +3,6 @@ from copy import deepcopy
 from django.db import models
 from django.db.models import Field
 from django.db.models.base import ModelBase
-from django.utils.six import get_unbound_function
 
 from .options import RevisionOptions
 
@@ -112,9 +111,10 @@ class RevisionBase(ModelBase):
         for field in fields:
             related_model = field.remote_field.model
 
-            if related_model not in mcs.revision_model_by_model:
+            if RevisionModel not in related_model.__bases__:
+                continue
 
-                print(related_model)
+            if related_model not in mcs.revision_model_by_model:
 
                 new_attrs = {
                     field.name: deepcopy(field)
@@ -140,22 +140,6 @@ class RevisionBase(ModelBase):
 
                 related_model.revision_class = revision_class
                 revision_class.revision_for_class = related_model
-
-                # Monkey patching the non-revisioned model so it
-                # actually becomes revisioned.
-                old_save = get_unbound_function(related_model.save)
-
-                related_model.current_revision = RevisionModel.current_revision
-                related_model._get_instance_data = get_unbound_function(
-                    RevisionModel._get_instance_data
-                )
-
-                def monkey_save(self, *args, **kwargs):
-                    old_save(self, *args, **kwargs)
-                    data = self._get_instance_data()
-                    self.revision_class.objects.create(revision_for=self, **data)
-
-                related_model.save = monkey_save
                 mcs.revision_model_by_model[related_model] = revision_class
             else:
                 revision_class = mcs.revision_model_by_model[related_model]

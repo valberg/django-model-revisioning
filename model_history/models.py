@@ -19,7 +19,7 @@ class Revision(models.Model):
         null=True,
         blank=True,
         related_name="children_revisions",
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
     )
 
     is_head = models.BooleanField(default=False)
@@ -39,6 +39,7 @@ class Revision(models.Model):
                 for field in self._meta.get_fields()
                 if field.name not in excluded_field_names
                 and (field.is_relation and not field.auto_created)
+                and (Revision in field.remote_field.model.__bases__)
             ]
 
             for field in related_fields:
@@ -49,7 +50,7 @@ class Revision(models.Model):
                     )
 
                     if related_model_instance and not isinstance(
-                        self.revision_for, field.remote_field.model
+                        self.revision_for, field.model
                     ):
                         related_model_instance.save()
 

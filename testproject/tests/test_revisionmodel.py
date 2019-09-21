@@ -1,5 +1,6 @@
 # coding: utf-8
 # from model_history import signals
+import pytest
 from testapp import models
 
 
@@ -24,22 +25,16 @@ def test_revision_on_edit(db):
     assert revision2.text == text_body
 
 
-def test_foreign_keys(db):
+def test_non_versioned_foreign_keys(db):
     non_revisioned_instance = models.NonRevisionedModel.objects.create()
 
     bar = models.Bar.objects.create(non_revisioned_foreign_key=non_revisioned_instance)
 
-    assert (
-        bar.revisions.last().non_revisioned_foreign_key
-        == non_revisioned_instance.current_revision
-    )
+    assert bar.revisions.last().non_revisioned_foreign_key == non_revisioned_instance
 
     bar.save()
 
-    assert (
-        bar.revisions.last().non_revisioned_foreign_key
-        == non_revisioned_instance.current_revision
-    )
+    assert bar.revisions.last().non_revisioned_foreign_key == non_revisioned_instance
 
 
 def test_self_referral(db):
@@ -165,3 +160,15 @@ def test_revision_on_update(db):
 #
 #             assert pre_change_head.call_count == 1
 #             assert post_change_head.call_count == 1
+
+
+def test_revision_model_admin_raises_exception_on_non_version_model(db):
+    from django.contrib import admin
+    from model_history.admin import RevisionModelAdmin
+    from django.core.exceptions import ImproperlyConfigured
+
+    with pytest.raises(ImproperlyConfigured):
+        if admin.site.is_registered(models.NonRevisionedModel):
+            admin.site.unregister(models.NonRevisionedModel)
+
+        admin.site.register(models.NonRevisionedModel, RevisionModelAdmin)

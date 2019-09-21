@@ -1,6 +1,7 @@
 # coding: utf-8
 from django.contrib.admin import ModelAdmin
 from django.contrib.admin.utils import unquote
+from django.core.exceptions import ImproperlyConfigured
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
@@ -8,9 +9,16 @@ from django.utils.encoding import force_text
 from django.utils.text import capfirst
 from django.utils.translation import gettext_lazy as _
 
+from .models import RevisionModel
+
 
 class RevisionModelAdmin(ModelAdmin):
     change_form_template = "doc_brown/change_form.html"
+
+    def __init__(self, model, admin_site):
+        if RevisionModel not in model.__bases__:
+            raise ImproperlyConfigured("Model {} is not versioned.".format(model))
+        super().__init__(model, admin_site)
 
     def get_urls(self):
         from django.conf.urls import url
@@ -59,9 +67,4 @@ class RevisionModelAdmin(ModelAdmin):
         )
 
         context.update(extra_context or {})
-        return TemplateResponse(
-            request,
-            "doc_brown/revisions.html",
-            context,
-            current_app=self.admin_site.name,
-        )
+        return TemplateResponse(request, "doc_brown/revisions.html", context)
