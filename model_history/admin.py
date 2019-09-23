@@ -13,7 +13,7 @@ from .models import RevisionModel
 
 
 class RevisionModelAdmin(ModelAdmin):
-    change_form_template = "doc_brown/change_form.html"
+    change_form_template = "model_history/change_form.html"
 
     def __init__(self, model, admin_site):
         if RevisionModel not in model.__bases__:
@@ -67,4 +67,4 @@ class RevisionModelAdmin(ModelAdmin):
         )
 
         context.update(extra_context or {})
-        return TemplateResponse(request, "doc_brown/revisions.html", context)
+        return TemplateResponse(request, "model_history/revisions.html", context)

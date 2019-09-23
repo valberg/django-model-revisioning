@@ -11,7 +11,7 @@ from .managers import ModelHistoryManager
 class Revision(models.Model):
     """ Model for revisions. """
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     revision_at = models.DateTimeField(auto_now_add=True)
 
     parent_revision = models.ForeignKey(
@@ -45,22 +45,28 @@ class Revision(models.Model):
             for field in related_fields:
                 pk = field.value_from_object(self)
                 if pk:
-                    related_model_instance = field.remote_field.model.revision_for_class.objects.get(
+                    related_model_instance = field.related_model.original_model_class.objects.get(
                         pk=pk
                     )
 
-                    if related_model_instance and not isinstance(
-                        self.revision_for, field.model
+                    if not isinstance(
+                        self.original_object, field.related_model.original_model_class
                     ):
                         related_model_instance.save()
 
-                    setattr(self, field.name, related_model_instance.current_revision)
+                    if self.original_object == related_model_instance:
+                        # The object is referring to itself
+                        self.__dict__[field.name + "_id"] = self.id
+                    else:
+                        self.__dict__[
+                            field.name + "_id"
+                        ] = related_model_instance.current_revision.id
 
-        super(Revision, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     def make_head(self):
         """ Make this revision to head. """
-        current_head = self.revision_for.current_revision
+        current_head = self.original_object.current_revision
         if current_head:
             current_head.save(remove_head=True)
         self.is_head = True
@@ -110,14 +116,12 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
         signals.pre_revision.send(sender=self.__class__, instance=self)
 
         new_revision = self.revisions.create(
-            revision_for=self, parent_revision=self.current_revision, **data
+            original_object=self, parent_revision=self.current_revision, **data
         )
 
         signals.post_revision.send(
             sender=self.__class__, instance=self, revision=new_revision
         )
-
-        return new_revision
 
     def save(self, *args, **kwargs):
         changing_head = kwargs.pop("changing_head", False)
@@ -127,8 +131,9 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
             if soft_deletion:
                 self.is_deleted = True
 
-        super(RevisionModel, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
+        # If referring_to_self is set the we already have a revision
         if not changing_head:
             self.create_revision()
 
@@ -136,7 +141,7 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
         if self._revisions.soft_deletion:
             self.save(using=using, soft_deletion=True)
         else:
-            super(RevisionModel, self).delete(using=using)
+            super().delete(using=using)
 
     @property
     def current_revision(self):
@@ -163,7 +168,7 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
         if type(revision) == str:
             revision = self.revisions.get(pk=revision)
 
-        if revision.revision_for != self:
+        if revision.original_object != self:
             raise Exception(
                 "The given revision ({}) is not a revision of "
                 "this instance ({})".format(revision, self)

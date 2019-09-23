@@ -6,7 +6,7 @@ register = template.Library()
 
 @register.simple_tag
 def revision_as_dict(obj):
-    excluded_fields = ["parent_revision", "is_head", "id", "revision_for"]
+    excluded_fields = ["parent_revision", "is_head", "id", "original_object"]
     return model_to_dict(obj, exclude=excluded_fields)
 
 

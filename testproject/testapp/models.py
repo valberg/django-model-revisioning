@@ -7,6 +7,15 @@ class NonRevisionedModel(models.Model):
     char = models.CharField(max_length=255, null=True, blank=True)
 
 
+class Baz(RevisionModel):
+    char = models.CharField(max_length=255, null=True, blank=True)
+    int = models.IntegerField(null=True, blank=True)
+    text = models.TextField(null=True, blank=True)
+
+    class Revisions:
+        fields = ["char", "text"]
+
+
 class Bar(RevisionModel):
     char = models.CharField(max_length=255, null=True, blank=True)
     int = models.IntegerField(null=True, blank=True)
@@ -35,17 +44,10 @@ class Bar(RevisionModel):
         "self", null=True, blank=True, on_delete=models.CASCADE
     )
 
+    baz = models.ForeignKey(Baz, null=True, blank=True, on_delete=models.CASCADE)
+
     class Revisions:
         fields = "__all__"
-
-
-class Baz(RevisionModel):
-    char = models.CharField(max_length=255, null=True, blank=True)
-    int = models.IntegerField(null=True, blank=True)
-    text = models.TextField(null=True, blank=True)
-
-    class Revisions:
-        fields = ["char", "text"]
 
 
 class SoftDeleted(RevisionModel):

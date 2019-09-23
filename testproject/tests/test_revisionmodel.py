@@ -25,7 +25,7 @@ def test_revision_on_edit(db):
     assert revision2.text == text_body
 
 
-def test_non_versioned_foreign_keys(db):
+def test_non_revisioned_foreign_keys(db):
     non_revisioned_instance = models.NonRevisionedModel.objects.create()
 
     bar = models.Bar.objects.create(non_revisioned_foreign_key=non_revisioned_instance)
@@ -162,7 +162,7 @@ def test_revision_on_update(db):
 #             assert post_change_head.call_count == 1
 
 
-def test_revision_model_admin_raises_exception_on_non_version_model(db):
+def test_revision_model_admin_raises_exception_on_non_revision_model(db):
     from django.contrib import admin
     from model_history.admin import RevisionModelAdmin
     from django.core.exceptions import ImproperlyConfigured
@@ -172,3 +172,34 @@ def test_revision_model_admin_raises_exception_on_non_version_model(db):
             admin.site.unregister(models.NonRevisionedModel)
 
         admin.site.register(models.NonRevisionedModel, RevisionModelAdmin)
+
+
+def test_foreignkey_to_same_model(db):
+    bar1 = models.Bar.objects.create(char="#" * 20)
+    bar2 = models.Bar.objects.create(char="*" * 10, parent_bar=bar1)
+
+    bar3 = models.Bar.objects.create()
+    bar2.parent_bar = bar3
+    bar2.save()
+
+    bar2.parent_bar = None
+    bar2.save()
+
+    assert bar2.revisions.all()[0].parent_bar == bar1.current_revision
+    assert bar2.revisions.all()[1].parent_bar == bar3.current_revision
+    assert bar2.revisions.all()[2].parent_bar is None
+
+
+def test_foreignkey_to_same_object(db):
+
+    bar = models.Bar.objects.create(char="hest")
+
+    first_revision = bar.current_revision
+
+    bar.parent_bar = bar
+    bar.save()
+
+    second_revision = bar.current_revision
+
+    assert first_revision.parent_bar is None
+    assert second_revision.parent_bar == second_revision
