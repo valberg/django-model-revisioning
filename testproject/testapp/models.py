@@ -16,6 +16,10 @@ class Baz(RevisionModel):
         fields = ["char", "text"]
 
 
+class Foo(RevisionModel):
+    char = models.CharField(max_length=255, null=True, blank=True)
+
+
 class Bar(RevisionModel):
     char = models.CharField(max_length=255, null=True, blank=True)
     int = models.IntegerField(null=True, blank=True)
@@ -39,12 +43,15 @@ class Bar(RevisionModel):
         "auth.Group", null=True, blank=True, on_delete=models.CASCADE
     )
 
-    # TODO: Get this to work:
     parent_bar = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.CASCADE
     )
 
-    baz = models.ForeignKey(Baz, null=True, blank=True, on_delete=models.CASCADE)
+    baz = models.ForeignKey(
+        "testapp.Baz", null=True, blank=True, on_delete=models.CASCADE
+    )
+
+    # foos = models.ManyToManyField("testapp.Foo")
 
     class Revisions:
         fields = "__all__"
@@ -59,19 +66,3 @@ class SoftDeleted(RevisionModel):
 
 class ModelWithoutOptions(RevisionModel):
     content = models.TextField()
-
-
-class SerializedRelatedModel(RevisionModel):
-    non_revisioned_foreign_key = models.ForeignKey(
-        NonRevisionedModel,
-        null=True,
-        blank=True,
-        related_name="fk",
-        on_delete=models.CASCADE,
-    )
-    non_revisioned_many_to_many = models.ManyToManyField(
-        NonRevisionedModel, blank=True, related_name="many"
-    )
-
-    class Revisions:
-        related_strategy = "serialize"

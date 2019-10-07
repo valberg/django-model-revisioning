@@ -203,3 +203,24 @@ def test_foreignkey_to_same_object(db):
 
     assert first_revision.parent_bar is None
     assert second_revision.parent_bar == second_revision
+
+
+def test_foreignkey_to_other_revisioned_model(db):
+    baz = models.Baz.objects.create()
+    bar = models.Bar.objects.create()
+
+    bar.baz = baz
+    bar.save()
+
+    assert bar.current_revision.baz == baz.current_revision
+
+
+def test_many_to_many(db):
+
+    baz1 = models.Baz.objects.create()
+    baz2 = models.Baz.objects.create()
+
+    bar = models.Bar.objects.create()
+    bar.many_baz.set([baz1, baz2])
+
+    print(bar.current_revision.many_baz)
