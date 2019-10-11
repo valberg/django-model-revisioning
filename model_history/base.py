@@ -21,6 +21,8 @@ class RevisionBase(ModelBase):
         revision_attrs = deepcopy(attrs)
         revisions_options = attrs.pop("Revisions", None)
 
+        attrs["revisioned_foreign_keys"] = []
+
         new_class = super().__new__(mcs, name, bases, attrs)
         new_class.add_to_class("_revisions", RevisionOptions(revisions_options))
 
@@ -50,6 +52,14 @@ class RevisionBase(ModelBase):
         attrs["__module__"] = module if module else original_model.__module__
 
         revision_class = super().__new__(mcs, new_class_name, bases, attrs)
+
+        for foreign_key in original_model.revisioned_foreign_keys:
+            new_foreign_key_field = deepcopy(foreign_key)
+            new_foreign_key_field.remote_field.model = (
+                foreign_key.remote_field.model.revision_class
+            )
+            revision_class.add_to_class(foreign_key.name, new_foreign_key_field)
+
         revision_class.add_to_class(
             "original_object",
             models.ForeignKey(
@@ -57,6 +67,7 @@ class RevisionBase(ModelBase):
             ),
         )
         original_model.revision_class = revision_class
+
         revision_class.original_model_class = original_model
 
         return revision_class

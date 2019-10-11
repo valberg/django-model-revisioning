@@ -206,13 +206,13 @@ def test_foreignkey_to_same_object(db):
 
 
 def test_foreignkey_to_other_revisioned_model(db):
-    baz = models.Baz.objects.create()
+    foo = models.Foo.objects.create()
     bar = models.Bar.objects.create()
 
-    bar.baz = baz
+    bar.foo = foo
     bar.save()
 
-    assert bar.current_revision.baz == baz.current_revision
+    assert bar.current_revision.foo == foo.current_revision
 
 
 def test_many_to_many(db):

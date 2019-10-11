@@ -1,5 +1,6 @@
 from django.db import models
 
+from model_history.fields import RevisionedForeignKey
 from model_history.models import RevisionModel
 
 
@@ -43,12 +44,12 @@ class Bar(RevisionModel):
         "auth.Group", null=True, blank=True, on_delete=models.CASCADE
     )
 
-    parent_bar = models.ForeignKey(
-        "self", null=True, blank=True, on_delete=models.CASCADE
-    )
+    # parent_bar = RevisionedForeignKey(
+    #     "self", null=True, blank=True, on_delete=models.CASCADE
+    # )
 
-    baz = models.ForeignKey(
-        "testapp.Baz", null=True, blank=True, on_delete=models.CASCADE
+    foo = RevisionedForeignKey(
+        "testapp.Foo", null=True, blank=True, on_delete=models.CASCADE
     )
 
     # foos = models.ManyToManyField("testapp.Foo")
