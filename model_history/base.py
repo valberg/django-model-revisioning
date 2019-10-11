@@ -55,9 +55,14 @@ class RevisionBase(ModelBase):
 
         for foreign_key in original_model.revisioned_foreign_keys:
             new_foreign_key_field = deepcopy(foreign_key)
-            new_foreign_key_field.remote_field.model = (
-                foreign_key.remote_field.model.revision_class
-            )
+
+            if foreign_key.remote_field.model == original_model:
+                # Self referral
+                new_foreign_key_field.remote_field.model = revision_class
+            else:
+                new_foreign_key_field.remote_field.model = (
+                    foreign_key.remote_field.model.revision_class
+                )
             revision_class.add_to_class(foreign_key.name, new_foreign_key_field)
 
         revision_class.add_to_class(

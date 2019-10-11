@@ -44,9 +44,9 @@ class Bar(RevisionModel):
         "auth.Group", null=True, blank=True, on_delete=models.CASCADE
     )
 
-    # parent_bar = RevisionedForeignKey(
-    #     "self", null=True, blank=True, on_delete=models.CASCADE
-    # )
+    parent_bar = RevisionedForeignKey(
+        "self", null=True, blank=True, on_delete=models.CASCADE
+    )
 
     foo = RevisionedForeignKey(
         "testapp.Foo", null=True, blank=True, on_delete=models.CASCADE
