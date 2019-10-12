@@ -1,4 +1,4 @@
-from django.db.models import ForeignKey
+from model_history.fields import RevisionedForeignKey
 
 
 class RevisionOptions(object):
@@ -20,7 +20,8 @@ class RevisionOptions(object):
         field_names = [
             field.name
             for field in cls._meta.fields
-            if field.name not in ["id", "is_head"] and not isinstance(field, ForeignKey)
+            if field.name not in ["id", "is_head"]
+            and not isinstance(field, RevisionedForeignKey)
         ]
 
         if self.options:

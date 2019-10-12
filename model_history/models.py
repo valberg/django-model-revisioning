@@ -99,7 +99,7 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
             ):
                 # Get the value of the field and add it to the dict
                 field_name = field.name
-                if isinstance(field, RevisionedForeignKey):
+                if isinstance(field, models.ForeignKey):
                     field_name += "_id"
                 data[field_name] = field.value_from_object(self)
         return data
