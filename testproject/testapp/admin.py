@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import Bar
 from .models import Baz
+from .models import Foo
 from .models import ModelWithoutOptions
 from .models import NonRevisionedModel
 from .models import SoftDeleted
@@ -15,6 +16,11 @@ class BarAdmin(RevisionModelAdmin):
 
 @admin.register(Baz)
 class BazAdmin(RevisionModelAdmin):
+    list_display = ("char", "current_revision", "revisions_count")
+
+
+@admin.register(Foo)
+class FooAdmin(RevisionModelAdmin):
     list_display = ("char", "current_revision", "revisions_count")
 
 

@@ -35,34 +35,38 @@ class Revision(models.Model):
         else:
             self.make_head()
 
-            foreign_keys = [
-                field
-                for field in self._meta.get_fields()
-                if field.name not in excluded_field_names
-                and not field.auto_created
-                and isinstance(field, RevisionedForeignKey)
-                and (Revision in field.remote_field.model.__bases__)
-            ]
+            # When creating a new revision we need to convert ForeignKeys
+            if kwargs.get("force_insert", False):
+                foreign_keys = [
+                    field
+                    for field in self._meta.get_fields()
+                    if field.name not in excluded_field_names
+                    and not field.auto_created
+                    and isinstance(field, RevisionedForeignKey)
+                    and (Revision in field.remote_field.model.__bases__)
+                ]
 
-            for field in foreign_keys:
-                pk = field.value_from_object(self)
-                if pk:
-                    related_model_instance = field.related_model.original_model_class.objects.get(
-                        pk=pk
-                    )
+                for field in foreign_keys:
+                    pk = field.value_from_object(self)
 
-                    if not isinstance(
-                        self.original_object, field.related_model.original_model_class
-                    ):
-                        related_model_instance.save()
+                    if pk:
+                        related_model_instance = field.related_model.original_model_class.objects.get(
+                            pk=pk
+                        )
 
-                    if self.original_object == related_model_instance:
-                        # The object is referring to itself
-                        self.__dict__[field.name + "_id"] = self.id
-                    else:
-                        self.__dict__[
-                            field.name + "_id"
-                        ] = related_model_instance.current_revision.id
+                        if not isinstance(
+                            self.original_object,
+                            field.related_model.original_model_class,
+                        ):
+                            related_model_instance.save(called_from_revision=True)
+
+                        if self.original_object == related_model_instance:
+                            # The object is referring to itself
+                            self.__dict__[field.name + "_id"] = self.id
+                        else:
+                            self.__dict__[
+                                field.name + "_id"
+                            ] = related_model_instance.current_revision.id
 
         super().save(*args, **kwargs)
 
@@ -130,6 +134,7 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
     def save(self, *args, **kwargs):
         changing_head = kwargs.pop("changing_head", False)
         soft_deletion = kwargs.pop("soft_deletion", False)
+        called_from_revision = kwargs.pop("called_from_revision", False)
 
         if not changing_head:
             if soft_deletion:
@@ -140,6 +145,16 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
         # If referring_to_self is set the we already have a revision
         if not changing_head:
             self.create_revision()
+
+        # If this save is not called from a revision,
+        # it means we have to do a "reverse save" on all related RevisionModels
+        if not called_from_revision:
+            for obj in self._meta.related_objects:
+                if issubclass(obj.related_model, RevisionModel):
+                    kwargs = {obj.remote_field.name: self}
+                    related_objects = obj.related_model.objects.filter(**kwargs)
+                    for related_object in related_objects:
+                        related_object.create_revision()
 
     def delete(self, using=None):
         if self._revisions.soft_deletion:
@@ -185,6 +200,17 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
 
         for name, value in fields.items():
             setattr(self, name, value)
+
+        foreign_key_fields = {
+            field: field.value_from_object(revision)
+            for field in self._meta.fields
+            if isinstance(field, RevisionedForeignKey)
+        }
+
+        for fk_field, fk_value in foreign_key_fields.items():
+            if fk_value:
+                fk_object = getattr(self, fk_field.name)
+                fk_object.set_head(str(fk_value))
 
         self.save(changing_head=True)
 

@@ -35,12 +35,6 @@ def test_non_revisioned_foreign_keys(db):
     assert bar.revisions.last().non_revisioned_foreign_key == non_revisioned_instance
 
 
-def test_self_referral(db):
-    bar1 = models.Bar.objects.create()
-    bar2 = models.Bar.objects.create(parent_bar=bar1)
-    assert bar2.current_revision.parent_bar == bar1.current_revision
-
-
 def test_parent_revision(db):
     bar1 = models.Bar.objects.create()
 
@@ -137,29 +131,6 @@ def test_revision_on_update(db):
     assert bar2.revisions.filter(char="foo").count() == 1
 
 
-# def test_revision_creation_signals(db):
-#     with mock_signal_receiver(signals.pre_revision) as pre_revision:
-#         with mock_signal_receiver(signals.post_revision) as post_revision:
-#             bar = models.Bar.objects.create()
-#             assert pre_revision.call_count == 1
-#             assert post_revision.call_count == 1
-#
-#             bar.char = "foo"
-#             bar.save()
-
-
-# def test_head_change_signals(db):
-#     bar = models.Bar.objects.create()
-#     bar.char = "foo"
-#     bar.save()
-#     with mock_signal_receiver(signals.pre_change_head) as pre_change_head:
-#         with mock_signal_receiver(signals.post_change_head) as post_change_head:
-#             bar.set_head(bar.revisions.first())
-#
-#             assert pre_change_head.call_count == 1
-#             assert post_change_head.call_count == 1
-
-
 def test_revision_model_admin_raises_exception_on_non_revision_model(db):
     from django.contrib import admin
     from model_history.admin import RevisionModelAdmin
@@ -209,5 +180,68 @@ def test_foreignkey_to_other_revisioned_model(db):
 
     bar.foo = foo
     bar.save()
-
     assert bar.current_revision.foo == foo.current_revision
+    assert bar.revisions.count() == 2
+
+
+def test_new_revision_for_related_model_when_model_is_edited(db):
+    # Triggers new foo revision (1 revision)
+    foo = models.Foo.objects.create()
+
+    # Triggers new foo revision (2 revisions)
+    bar = models.Bar.objects.create(foo=foo)
+
+    bar.char = "trigger revision"
+
+    # Triggers new foo revision (3 revisions)
+    bar.save()
+
+    assert foo.revisions.count() == 3
+
+
+def test_new_revision_when_related_model_is_edited(db):
+    foo = models.Foo.objects.create()
+
+    # Triggers new bar revision (1 revision)
+    bar = models.Bar.objects.create(foo=foo)
+
+    foo.char = "trigger revision"
+
+    # Triggers new bar revision (2 revisions)
+    foo.save()
+
+    assert bar.revisions.count() == 2
+
+    # Triggers new bar1 revision (1 revision)
+    bar1 = models.Bar.objects.create(foo=foo)
+
+    foo.char = "trigger revision again"
+
+    # Triggers new bar revision (3 revisions) and bar1 revision (2 revisions)
+    foo.save()
+
+    assert bar.revisions.count() == 3
+    assert bar1.revisions.count() == 2
+
+
+def test_making_revision_head_cascades_to_foreign_keys(db):
+    foo = models.Foo.objects.create(char="foo")
+
+    # Triggers new bar revision (1 revision)
+    bar = models.Bar.objects.create(foo=foo)
+
+    foo.char = "trigger revision"
+
+    # Triggers new bar revision (2 revisions)
+    foo.save()
+
+    bar.refresh_from_db()
+
+    bar.set_head(bar.revisions.first())
+
+    bar.refresh_from_db()
+    print(bar.current_revision)
+
+    foo.refresh_from_db()
+
+    assert foo.char == "foo"
