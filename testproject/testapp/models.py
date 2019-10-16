@@ -1,5 +1,6 @@
 from django.db import models
 
+from model_history.fields import RevisionedForeignKey
 from model_history.models import RevisionModel
 
 
@@ -14,6 +15,10 @@ class Baz(RevisionModel):
 
     class Revisions:
         fields = ["char", "text"]
+
+
+class Foo(RevisionModel):
+    char = models.CharField(max_length=255, null=True, blank=True)
 
 
 class Bar(RevisionModel):
@@ -39,12 +44,13 @@ class Bar(RevisionModel):
         "auth.Group", null=True, blank=True, on_delete=models.CASCADE
     )
 
-    # TODO: Get this to work:
-    parent_bar = models.ForeignKey(
+    parent_bar = RevisionedForeignKey(
         "self", null=True, blank=True, on_delete=models.CASCADE
     )
 
-    baz = models.ForeignKey(Baz, null=True, blank=True, on_delete=models.CASCADE)
+    foo = RevisionedForeignKey(
+        "testapp.Foo", null=True, blank=True, on_delete=models.CASCADE
+    )
 
     class Revisions:
         fields = "__all__"
@@ -61,17 +67,5 @@ class ModelWithoutOptions(RevisionModel):
     content = models.TextField()
 
 
-class SerializedRelatedModel(RevisionModel):
-    non_revisioned_foreign_key = models.ForeignKey(
-        NonRevisionedModel,
-        null=True,
-        blank=True,
-        related_name="fk",
-        on_delete=models.CASCADE,
-    )
-    non_revisioned_many_to_many = models.ManyToManyField(
-        NonRevisionedModel, blank=True, related_name="many"
-    )
-
-    class Revisions:
-        related_strategy = "serialize"
+class StringRelatedModel(RevisionModel):
+    char = models.CharField(max_length=255, null=True, blank=True)

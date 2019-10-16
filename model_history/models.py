@@ -5,6 +5,7 @@ from django.db import models
 from . import signals
 from .base import excluded_field_names
 from .base import RevisionBase
+from .fields import RevisionedForeignKey
 from .managers import ModelHistoryManager
 
 
@@ -34,15 +35,16 @@ class Revision(models.Model):
         else:
             self.make_head()
 
-            related_fields = [
+            foreign_keys = [
                 field
                 for field in self._meta.get_fields()
                 if field.name not in excluded_field_names
-                and (field.is_relation and not field.auto_created)
+                and not field.auto_created
+                and isinstance(field, RevisionedForeignKey)
                 and (Revision in field.remote_field.model.__bases__)
             ]
 
-            for field in related_fields:
+            for field in foreign_keys:
                 pk = field.value_from_object(self)
                 if pk:
                     related_model_instance = field.related_model.original_model_class.objects.get(
@@ -93,7 +95,9 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
         """
         data = dict()
         for field in self._meta.fields:
-            if field.name in self._revisions.fields:
+            if field.name in self._revisions.fields or isinstance(
+                field, RevisionedForeignKey
+            ):
                 # Get the value of the field and add it to the dict
                 field_name = field.name
                 if isinstance(field, models.ForeignKey):

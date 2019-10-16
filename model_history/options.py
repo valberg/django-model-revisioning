@@ -1,4 +1,6 @@
-# coding: utf-8
+from model_history.fields import RevisionedForeignKey
+
+
 class RevisionOptions(object):
     """
     This class is basically a copy of the django.db.options.Options class
@@ -19,6 +21,7 @@ class RevisionOptions(object):
             field.name
             for field in cls._meta.fields
             if field.name not in ["id", "is_head"]
+            and not isinstance(field, RevisionedForeignKey)
         ]
 
         if self.options:
