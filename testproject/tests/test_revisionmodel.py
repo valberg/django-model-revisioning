@@ -184,21 +184,6 @@ def test_foreignkey_to_other_revisioned_model(db):
     assert bar.revisions.count() == 2
 
 
-def test_new_revision_for_related_model_when_model_is_edited(db):
-    # Triggers new foo revision (1 revision)
-    foo = models.Foo.objects.create()
-
-    # Triggers new foo revision (2 revisions)
-    bar = models.Bar.objects.create(foo=foo)
-
-    bar.char = "trigger revision"
-
-    # Triggers new foo revision (3 revisions)
-    bar.save()
-
-    assert foo.revisions.count() == 3
-
-
 def test_new_revision_when_related_model_is_edited(db):
     # Triggers new foo revision (1 revision)
     foo = models.Foo.objects.create()

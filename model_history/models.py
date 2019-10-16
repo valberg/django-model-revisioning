@@ -52,12 +52,6 @@ class Revision(models.Model):
                             pk=pk
                         )
 
-                        if not isinstance(
-                            self.original_object,
-                            field.related_model.original_model_class,
-                        ):
-                            related_model_instance.save(called_from_revision=True)
-
                         if self.original_object == related_model_instance:
                             # The object is referring to itself
                             self.__dict__[field.name + "_id"] = self.id
