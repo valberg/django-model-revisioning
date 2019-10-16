@@ -1,5 +1,5 @@
 API
 ---
 
-.. automodule:: doc_brown.models
+.. automodule:: model_history.models
     :members:
