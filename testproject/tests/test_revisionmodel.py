@@ -200,6 +200,7 @@ def test_new_revision_for_related_model_when_model_is_edited(db):
 
 
 def test_new_revision_when_related_model_is_edited(db):
+    # Triggers new foo revision (1 revision)
     foo = models.Foo.objects.create()
 
     # Triggers new bar revision (1 revision)
@@ -208,9 +209,11 @@ def test_new_revision_when_related_model_is_edited(db):
     foo.char = "trigger revision"
 
     # Triggers new bar revision (2 revisions)
+    # Triggers new foo revision (3 revisions)
     foo.save()
 
     assert bar.revisions.count() == 2
+    assert foo.revisions.count() == 2
 
     # Triggers new bar1 revision (1 revision)
     bar1 = models.Bar.objects.create(foo=foo)
@@ -218,10 +221,12 @@ def test_new_revision_when_related_model_is_edited(db):
     foo.char = "trigger revision again"
 
     # Triggers new bar revision (3 revisions) and bar1 revision (2 revisions)
+    # Triggers new foo revision (3 revisions)
     foo.save()
 
     assert bar.revisions.count() == 3
     assert bar1.revisions.count() == 2
+    assert foo.revisions.count() == 3
 
 
 def test_making_revision_head_cascades_to_foreign_keys(db):
@@ -240,7 +245,6 @@ def test_making_revision_head_cascades_to_foreign_keys(db):
     bar.set_head(bar.revisions.first())
 
     bar.refresh_from_db()
-    print(bar.current_revision)
 
     foo.refresh_from_db()
 

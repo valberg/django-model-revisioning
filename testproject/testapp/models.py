@@ -20,11 +20,6 @@ class Baz(RevisionModel):
 class Foo(RevisionModel):
     char = models.CharField(max_length=255, null=True, blank=True)
 
-    def __str__(self):
-        if self.char:
-            return self.char
-        return "N/A"
-
 
 class Bar(RevisionModel):
     char = models.CharField(max_length=255, null=True, blank=True)

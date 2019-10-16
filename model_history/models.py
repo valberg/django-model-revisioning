@@ -41,9 +41,7 @@ class Revision(models.Model):
                     field
                     for field in self._meta.get_fields()
                     if field.name not in excluded_field_names
-                    and not field.auto_created
                     and isinstance(field, RevisionedForeignKey)
-                    and (Revision in field.remote_field.model.__bases__)
                 ]
 
                 for field in foreign_keys:
@@ -98,15 +96,20 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
                  check if a revision is required.
         """
         data = dict()
-        for field in self._meta.fields:
-            if field.name in self._revisions.fields or isinstance(
-                field, RevisionedForeignKey
-            ):
-                # Get the value of the field and add it to the dict
-                field_name = field.name
-                if isinstance(field, models.ForeignKey):
-                    field_name += "_id"
-                data[field_name] = field.value_from_object(self)
+
+        fields = filter(
+            lambda f: f.name in self._revisions.fields
+            or isinstance(f, RevisionedForeignKey),
+            self._meta.fields,
+        )
+
+        for field in fields:
+            # Get the value of the field and add it to the dict
+            field_name = field.name
+            if isinstance(field, models.ForeignKey):
+                field_name += "_id"
+            data[field_name] = field.value_from_object(self)
+
         return data
 
     def create_revision(self, **kwargs):
@@ -123,18 +126,23 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
 
         signals.pre_revision.send(sender=self.__class__, instance=self)
 
-        new_revision = self.revisions.create(
+        new_revision = self.revision_class(
             original_object=self, parent_revision=self.current_revision, **data
         )
+        new_revision.save(force_insert=True)
 
         signals.post_revision.send(
             sender=self.__class__, instance=self, revision=new_revision
         )
 
-    def save(self, *args, **kwargs):
-        changing_head = kwargs.pop("changing_head", False)
-        soft_deletion = kwargs.pop("soft_deletion", False)
-        called_from_revision = kwargs.pop("called_from_revision", False)
+    def save(
+        self,
+        *args,
+        changing_head=False,
+        soft_deletion=False,
+        called_from_revision=False,
+        **kwargs
+    ):
 
         if not changing_head:
             if soft_deletion:
@@ -142,12 +150,12 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
 
         super().save(*args, **kwargs)
 
-        # If referring_to_self is set the we already have a revision
         if not changing_head:
             self.create_revision()
 
         # If this save is not called from a revision,
-        # it means we have to do a "reverse save" on all related RevisionModels
+        # it means we have to do a "reverse save" on
+        # all related RevisionModels
         if not called_from_revision:
             for obj in self._meta.related_objects:
                 if issubclass(obj.related_model, RevisionModel):

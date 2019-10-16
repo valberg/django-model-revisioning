@@ -18,18 +18,18 @@ class RevisionBase(ModelBase):
         if name == "RevisionModel":
             return super(RevisionBase, mcs).__new__(mcs, name, bases, attrs)
 
-        revision_attrs = deepcopy(attrs)
+        attrs_copy = deepcopy(attrs)
         revisions_options = attrs.pop("Revisions", None)
 
         new_class = super().__new__(mcs, name, bases, attrs)
         new_class.add_to_class("_revisions", RevisionOptions(revisions_options))
 
         revision_attrs = {
-            key: val
-            for key, val in revision_attrs.items()
-            if not isinstance(val, Field)
+            key: val for key, val in attrs_copy.items() if not isinstance(val, Field)
         }
-        revision_attrs.update({key: attrs[key] for key in new_class._revisions.fields})
+        revision_attrs.update(
+            {key: attrs_copy[key] for key in new_class._revisions.fields}
+        )
 
         mcs._create_revision_model(name, revision_attrs, new_class)
 
