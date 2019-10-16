@@ -11,6 +11,7 @@ Contents:
    options
    admin
    signals
+   management
 
 What does django-model-history provide?
 ---------------------------------------
