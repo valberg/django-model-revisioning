@@ -213,14 +213,3 @@ def test_foreignkey_to_other_revisioned_model(db):
     bar.save()
 
     assert bar.current_revision.foo == foo.current_revision
-
-
-def test_many_to_many(db):
-
-    baz1 = models.Baz.objects.create()
-    baz2 = models.Baz.objects.create()
-
-    bar = models.Bar.objects.create()
-    bar.foo.set([baz1, baz2])
-
-    print(bar.current_revision.many_baz)

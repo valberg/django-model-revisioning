@@ -35,15 +35,16 @@ class Revision(models.Model):
         else:
             self.make_head()
 
-            related_fields = [
+            foreign_keys = [
                 field
                 for field in self._meta.get_fields()
                 if field.name not in excluded_field_names
-                and (field.is_relation and not field.auto_created)
+                and not field.auto_created
+                and isinstance(field, RevisionedForeignKey)
                 and (Revision in field.remote_field.model.__bases__)
             ]
 
-            for field in related_fields:
+            for field in foreign_keys:
                 pk = field.value_from_object(self)
                 if pk:
                     related_model_instance = field.related_model.original_model_class.objects.get(

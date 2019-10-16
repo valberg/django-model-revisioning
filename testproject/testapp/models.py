@@ -1,7 +1,6 @@
 from django.db import models
 
 from model_history.fields import RevisionedForeignKey
-from model_history.fields import RevisionedManyToManyField
 from model_history.models import RevisionModel
 
 
@@ -53,17 +52,8 @@ class Bar(RevisionModel):
         "testapp.Foo", null=True, blank=True, on_delete=models.CASCADE
     )
 
-    many_baz = RevisionedManyToManyField(
-        "testapp.Baz", through="testapp.BarManyBazRelation"
-    )
-
     class Revisions:
         fields = "__all__"
-
-
-class BarManyBazRelation(RevisionModel):
-    bar = RevisionedForeignKey("testapp.Bar", on_delete=models.CASCADE)
-    baz = RevisionedForeignKey("testapp.Baz", on_delete=models.CASCADE)
 
 
 class SoftDeleted(RevisionModel):

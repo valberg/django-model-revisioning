@@ -51,24 +51,6 @@ class RevisionBase(ModelBase):
 
         revision_class = super().__new__(mcs, new_class_name, bases, attrs)
 
-        # for m2m_field in original_model.revisioned_m2m_fields:
-        #     new_foreign_key_field = deepcopy(m2m_field)
-        #
-        #     if not isinstance(m2m_field.remote_field.through, RevisionModel):
-        #         raise ImproperlyConfigured(
-        #             "You should explicitly define a RevisionedManyToManyField's "
-        #             "through model as a RevisionModel."
-        #         )
-        #
-        #     if m2m_field.remote_field.model == original_model:
-        #         # Self referral
-        #         new_foreign_key_field.remote_field.model = revision_class
-        #     else:
-        #         new_foreign_key_field.remote_field.model = (
-        #             m2m_field.remote_field.model.revision_class
-        #         )
-        #     revision_class.add_to_class(m2m_field.name, new_foreign_key_field)
-
         revision_class.add_to_class(
             "original_object",
             models.ForeignKey(
