@@ -2,7 +2,7 @@
 
 Version control for django models (experimental)
 
-[![Documentation Status](https://readthedocs.org/projects/django-doc-brown/badge/?version=latest)](https://django-doc-brown.readthedocs.org/)
+[![Documentation Status](https://readthedocs.org/projects/django-model-history/badge/?version=latest)](https://django-doc-brown.readthedocs.org/)
 [![Build Status](https://travis-ci.org/valberg/django-model-history.svg?branch=master)](https://travis-ci.org/valberg/django-model-history)
 [![codecov](https://codecov.io/gh/valberg/django-model-history/branch/master/graph/badge.svg)](https://codecov.io/gh/valberg/django-model-history)
 

@@ -1,5 +1,3 @@
-# coding: utf-8
-# from model_history import signals
 import pytest
 from testapp import models
 
