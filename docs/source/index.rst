@@ -1,7 +1,7 @@
-Welcome to Django Model History documentation!
-============================================
+Welcome to the django-model-history documentation!
+==================================================
 
-Django Model History adds history to your models - migration compatible!
+django-model-history adds history to your models - migration compatible!
 
 Contents:
 
@@ -11,6 +11,16 @@ Contents:
    options
    admin
    signals
+
+What does django-model-history provide?
+---------------------------------------
+
+django-model-history makes copies of your models so that the django migration framework actual tables in your database.
+
+Say you have a model called `Movie`, django-model-history will create a model called `MovieRevision`.
+Every time you save an instance of `Movie` a `MovieRevision` instance will be created as well.
+
+If you then add new fields to `Movie`, django-model-history will pick up on it and add the same fields to `MovieRevision`.
 
 Installation
 ------------
@@ -30,17 +40,14 @@ and define a ``Revisions`` class in your model, like this::
 
     from django.db import models
     from model_history.models import RevisionModel
-    from model_history.fields import RevisionedForeignKey
 
-    class MyModel(RevisionModel):
-        name = models.TextField()
+    class Movie(RevisionModel):
+        name = models.CharField(max_length=200)
+        year = models.IntegerField()
 
         class Revisions:
-            fields = ['name']
+            fields = ["name", "year"]
 
-
-    class OtherModel(RevisionedModel):
-        my_model = RevisionedForeignKey('MyModel')
 
 See :doc:`options` for which options are available.
 
