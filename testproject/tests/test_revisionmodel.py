@@ -221,6 +221,6 @@ def test_many_to_many(db):
     baz2 = models.Baz.objects.create()
 
     bar = models.Bar.objects.create()
-    bar.many_baz.set([baz1, baz2])
+    bar.foo.set([baz1, baz2])
 
     print(bar.current_revision.many_baz)
