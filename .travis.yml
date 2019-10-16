@@ -1,28 +1,38 @@
-cache: pip
-
 language: python
 
+cache: pip
+
 python:
-  - "3.7"
   - "3.6"
 
-services:
-  - postgresql
-
-addons:
-  postgresql: "9.6"
-
 before_install:
-  - pip install poetry
+  - pip install poetry tox
 install:
   - poetry install
 
-before_script:
-  - psql -c "create database docbrown;" -U postgres
-  - psql -c "create role docbrown with login password 'docbrown' createdb;" -U postgres
-  - ./testproject/manage.py makemigrations
+script: tox -e $TOX_ENV
 
-script: py.test --cov=model_history testproject
+matrix:
+  fast_finish: true
+  include:
+    # Python 3.6
+    - python: 3.6
+      env: TOX_ENV=django22-py36
+    - python: 3.6
+      env: TOX_ENV=django30-py36
+
+    # Python 3.7
+    - python: 3.7
+      env: TOX_ENV=django22-py37
+    - python: 3.7
+      env: TOX_ENV=django30-py37
+
+    # Python 3.8
+# Disabled for now until poetry has 3.8 support
+#    - python: 3.8
+#      env: TOX_ENV=django22-py38
+#    - python: 3.8
+#      env: TOX_ENV=django30-py38
 
 after_success:
   - poetry run codecov
