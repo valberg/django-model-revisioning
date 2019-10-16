@@ -11,8 +11,6 @@ Contents:
    options
    admin
    signals
-   management
-   api
 
 Installation
 ------------
