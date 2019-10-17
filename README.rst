@@ -1,4 +1,5 @@
-# django-model-history
+django-model-history
+====================
 
 Add history to your models - migrations compatible!
 
@@ -12,11 +13,13 @@ Add history to your models - migrations compatible!
    :target: https://codecov.io/gh/valberg/django-model-history
    :alt: Code Coverage
 
-## Supported versions
+Supported versions
+------------------
 
 - Python 3.6, 3.7, (3.8 soon)
 - Django 2.2.x, 3.0.x
 
-## Current state
+Current state
+-------------
 
 django-model-history is currently not production ready - we need more tests for that!
