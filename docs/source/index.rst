@@ -28,7 +28,7 @@ Installation
 
 You can install the pre-release version using the following command::
 
-    pip install django-model-revisioning==0.0.1-alpha
+    pip install django-model-revisioning>=0.0.1-alpha
 
 Note that this is an alpha version and is not recommended for production use!
 
