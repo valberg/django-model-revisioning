@@ -1,5 +1,5 @@
 Welcome to the django-model-revisioning documentation!
-==================================================
+======================================================
 
 django-model-revisioning adds history to your models - migration compatible!
 
@@ -14,7 +14,7 @@ Contents:
    management
 
 What does django-model-revisioning provide?
----------------------------------------
+-------------------------------------------
 
 django-model-revisioning makes copies of your models so that the django migration framework actual tables in your database.
 
@@ -26,12 +26,11 @@ If you then add new fields to `Movie`, django-model-revisioning will pick up on 
 Installation
 ------------
 
-Currently django-model-revisioning has not been released to PyPI.
+You can install the pre-release version using the following command::
 
-You can install the development version using the following command::
+    pip install django-model-revisioning==0.0.1-alpha
 
-    pip install git+https://github.com/valberg/django-model-revisioning@master#egg=django-model-revisioning
-
+Note that this is an alpha version and is not recommended for production use!
 
 Usage
 -----
