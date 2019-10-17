@@ -7,7 +7,7 @@ Django Model History emits the following signals when dealing with revisions:
 pre_revision
 ------------
 
-.. data:: model_history.signals.pre_save
+.. data:: model_revisioning.signals.pre_save
    :module:
 
 Sent before creating a revision.
@@ -24,7 +24,7 @@ Arguments:
 post_revision
 -------------
 
-.. data:: model_history.signals.post_save
+.. data:: model_revisioning.signals.post_save
    :module:
 
 Sent a revision has been created.
@@ -44,7 +44,7 @@ Arguments:
 pre_change_head
 ---------------
 
-.. data:: model_history.signals.pre_change_head
+.. data:: model_revisioning.signals.pre_change_head
    :module:
 
 Sent before head gets changed on an object.
@@ -67,7 +67,7 @@ Arguments:
 post_change_head
 ----------------
 
-.. data:: model_history.signals.post_change_head
+.. data:: model_revisioning.signals.post_change_head
    :module:
 
 Sent after head gets changed on an object.

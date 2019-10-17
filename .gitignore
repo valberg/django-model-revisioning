@@ -7,5 +7,5 @@ docs/build/
 .coverage
 htmlcov/
 dist/
-django_model_history.egg-info/
+django_model_revisioning.egg-info/
 venv/

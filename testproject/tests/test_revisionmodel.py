@@ -133,7 +133,7 @@ def test_revision_on_update(db):
 
 def test_revision_model_admin_raises_exception_on_non_revision_model(db):
     from django.contrib import admin
-    from model_history.admin import RevisionModelAdmin
+    from model_revisioning.admin import RevisionModelAdmin
     from django.core.exceptions import ImproperlyConfigured
 
     with pytest.raises(ImproperlyConfigured):

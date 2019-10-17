@@ -1,7 +1,7 @@
-Welcome to the django-model-history documentation!
+Welcome to the django-model-revisioning documentation!
 ==================================================
 
-django-model-history adds history to your models - migration compatible!
+django-model-revisioning adds history to your models - migration compatible!
 
 Contents:
 
@@ -13,24 +13,24 @@ Contents:
    signals
    management
 
-What does django-model-history provide?
+What does django-model-revisioning provide?
 ---------------------------------------
 
-django-model-history makes copies of your models so that the django migration framework actual tables in your database.
+django-model-revisioning makes copies of your models so that the django migration framework actual tables in your database.
 
-Say you have a model called `Movie`, django-model-history will create a model called `MovieRevision`.
+Say you have a model called `Movie`, django-model-revisioning will create a model called `MovieRevision`.
 Every time you save an instance of `Movie` a `MovieRevision` instance will be created as well.
 
-If you then add new fields to `Movie`, django-model-history will pick up on it and add the same fields to `MovieRevision`.
+If you then add new fields to `Movie`, django-model-revisioning will pick up on it and add the same fields to `MovieRevision`.
 
 Installation
 ------------
 
-Currently django-model-history has not been released to PyPI.
+Currently django-model-revisioning has not been released to PyPI.
 
 You can install the development version using the following command::
 
-    pip install git+https://github.com/valberg/django-model-history@master#egg=django-model-history
+    pip install git+https://github.com/valberg/django-model-revisioning@master#egg=django-model-revisioning
 
 
 Usage
@@ -40,7 +40,7 @@ To install a flux capacitor in your model inherit from ``RevisionModel``
 and define a ``Revisions`` class in your model, like this::
 
     from django.db import models
-    from model_history.models import RevisionModel
+    from model_revisioning.models import RevisionModel
 
     class Movie(RevisionModel):
         name = models.CharField(max_length=200)

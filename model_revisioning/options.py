@@ -1,4 +1,4 @@
-from model_history.fields import RevisionedForeignKey
+from model_revisioning.fields import RevisionedForeignKey
 
 
 class RevisionOptions(object):

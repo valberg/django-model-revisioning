@@ -7,7 +7,7 @@ from django.db.models.utils import make_model_tuple
 
 class RevisionedForeignKey(models.ForeignKey):
     def contribute_to_class(self, cls, name, private_only=False, **kwargs):
-        from model_history.models import Revision
+        from model_revisioning.models import Revision
 
         super().contribute_to_class(cls, name, private_only=private_only, **kwargs)
 
@@ -53,8 +53,8 @@ class RevisionedForeignKey(models.ForeignKey):
 
 # class RevisionedManyToManyField(models.ManyToManyField):
 #     def contribute_to_class(self, cls, name, private_only=False, **kwargs):
-#         from model_history.models import Revision
-#         from model_history.models import RevisionModel
+#         from model_revisioning.models import Revision
+#         from model_revisioning.models import RevisionModel
 #
 #         super().contribute_to_class(cls, name, private_only=private_only, **kwargs)
 #

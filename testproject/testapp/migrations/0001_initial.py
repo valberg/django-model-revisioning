@@ -6,7 +6,7 @@ from django.conf import settings
 from django.db import migrations
 from django.db import models
 
-import model_history.fields
+import model_revisioning.fields
 
 
 class Migration(migrations.Migration):
@@ -351,7 +351,7 @@ class Migration(migrations.Migration):
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "foo",
-                    model_history.fields.RevisionedForeignKey(
+                    model_revisioning.fields.RevisionedForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
@@ -387,7 +387,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "parent_bar",
-                    model_history.fields.RevisionedForeignKey(
+                    model_revisioning.fields.RevisionedForeignKey(
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.CASCADE,
@@ -420,7 +420,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="bar",
             name="foo",
-            field=model_history.fields.RevisionedForeignKey(
+            field=model_revisioning.fields.RevisionedForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
@@ -450,7 +450,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="bar",
             name="parent_bar",
-            field=model_history.fields.RevisionedForeignKey(
+            field=model_revisioning.fields.RevisionedForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,

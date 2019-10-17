@@ -6,7 +6,7 @@ from .models import Foo
 from .models import ModelWithoutOptions
 from .models import NonRevisionedModel
 from .models import SoftDeleted
-from model_history.admin import RevisionModelAdmin
+from model_revisioning.admin import RevisionModelAdmin
 
 
 @admin.register(Bar)

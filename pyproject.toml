@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "django-model-history"
+name = "django-model-revisioning"
 version = "0.0.1-alpha"
 description = "Version control for django models."
 authors = ["Vidir Valberg Gudmundsson <valberg@orn.li>"]
 packages = [
-    { include = "model_history" }
+    { include = "model_revisioning" }
 ]
-repository = "https://github.com/valberg/django-model-history"
-documentation = "https://django-model-history.readthedocs.io"
+repository = "https://github.com/valberg/django-model-revisioning"
+documentation = "https://django-model-revisioning.readthedocs.io"
 readme = "README.rst"
 license = "GPL-3.0+"
 

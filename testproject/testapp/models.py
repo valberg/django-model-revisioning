@@ -1,7 +1,7 @@
 from django.db import models
 
-from model_history.fields import RevisionedForeignKey
-from model_history.models import RevisionModel
+from model_revisioning.fields import RevisionedForeignKey
+from model_revisioning.models import RevisionModel
 
 
 class NonRevisionedModel(models.Model):
