@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-model-revisioning"
-version = "0.0.1-alpha1"
+version = "0.0.1-alpha2"
 description = "Version control for django models."
 authors = ["Vidir Valberg Gudmundsson <valberg@orn.li>"]
 packages = [
