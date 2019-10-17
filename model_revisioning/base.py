@@ -27,9 +27,18 @@ class RevisionBase(ModelBase):
         revision_attrs = {
             key: val for key, val in attrs_copy.items() if not isinstance(val, Field)
         }
-        revision_attrs.update(
-            {key: attrs_copy[key] for key in new_class._revisions.fields}
-        )
+
+        revisioned_fields = {
+            key: attrs_copy[key] for key in new_class._revisions.fields
+        }
+
+        # We can not have any unique fields in revisions since many
+        # revisions might have the same value for a unique field.
+        for field in revisioned_fields.values():
+            field._unique = False
+
+        # Only include those model fields which are specified in RevisionsOptions
+        revision_attrs.update(revisioned_fields)
 
         mcs._create_revision_model(name, revision_attrs, new_class)
 

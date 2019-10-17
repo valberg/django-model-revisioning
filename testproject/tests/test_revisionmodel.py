@@ -175,8 +175,8 @@ def test_foreignkey_to_same_object(db):
 
 
 def test_foreignkey_to_other_revisioned_model(db):
-    foo = models.Foo.objects.create()
-    bar = models.Bar.objects.create()
+    foo = models.ModelOnOtherEndOfRevisionedForeignKey.objects.create(char="foo")
+    bar = models.ModelWithRevisionedForeignKey.objects.create()
 
     bar.foo = foo
     bar.save()
@@ -186,22 +186,22 @@ def test_foreignkey_to_other_revisioned_model(db):
 
 def test_new_revision_when_related_model_is_edited(db):
     # Triggers new foo revision (1 revision)
-    foo = models.Foo.objects.create()
+    foo = models.ModelOnOtherEndOfRevisionedForeignKey.objects.create(char="foo")
 
     # Triggers new bar revision (1 revision)
-    bar = models.Bar.objects.create(foo=foo)
+    bar = models.ModelWithRevisionedForeignKey.objects.create(foo=foo)
 
     foo.char = "trigger revision"
 
     # Triggers new bar revision (2 revisions)
-    # Triggers new foo revision (3 revisions)
+    # Triggers new foo revision (2 revisions)
     foo.save()
 
     assert bar.revisions.count() == 2
     assert foo.revisions.count() == 2
 
     # Triggers new bar1 revision (1 revision)
-    bar1 = models.Bar.objects.create(foo=foo)
+    bar1 = models.ModelWithRevisionedForeignKey.objects.create(foo=foo)
 
     foo.char = "trigger revision again"
 
@@ -215,10 +215,10 @@ def test_new_revision_when_related_model_is_edited(db):
 
 
 def test_making_revision_head_cascades_to_foreign_keys(db):
-    foo = models.Foo.objects.create(char="foo")
+    foo = models.ModelOnOtherEndOfRevisionedForeignKey.objects.create(char="foo")
 
     # Triggers new bar revision (1 revision)
-    bar = models.Bar.objects.create(foo=foo)
+    bar = models.ModelWithRevisionedForeignKey.objects.create(foo=foo)
 
     foo.char = "trigger revision"
 
@@ -234,3 +234,14 @@ def test_making_revision_head_cascades_to_foreign_keys(db):
     foo.refresh_from_db()
 
     assert foo.char == "foo"
+
+
+def test_uniqueness_is_removed_from_revisions(db):
+    foo = models.ModelWithUniqueField.objects.create(unique_field="test")
+
+    foo.unique_field = "test1"
+    foo.save()
+
+    # If uniqueness is not removed the following will fail with IntegrityError
+    foo.unique_field = "test"
+    foo.save()

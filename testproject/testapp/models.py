@@ -17,10 +17,6 @@ class Baz(RevisionModel):
         fields = ["char", "text"]
 
 
-class Foo(RevisionModel):
-    char = models.CharField(max_length=255, null=True, blank=True)
-
-
 class Bar(RevisionModel):
     char = models.CharField(max_length=255, null=True, blank=True)
     int = models.IntegerField(null=True, blank=True)
@@ -48,12 +44,36 @@ class Bar(RevisionModel):
         "self", null=True, blank=True, on_delete=models.CASCADE
     )
 
+
+class ModelWithRevisionedForeignKey(RevisionModel):
+
     foo = RevisionedForeignKey(
-        "testapp.Foo", null=True, blank=True, on_delete=models.CASCADE
+        "testapp.ModelOnOtherEndOfRevisionedForeignKey",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
     )
 
-    class Revisions:
-        fields = "__all__"
+
+class ModelOnOtherEndOfRevisionedForeignKey(RevisionModel):
+    char = models.CharField(max_length=255)
+
+
+class ModelWithUniqueField(RevisionModel):
+    unique_field = models.CharField(max_length=10, unique=True)
+
+
+class ModelWithDatabaseConstraint(RevisionModel):
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("choice", "foo"), name="one_choice_per_foo")
+        ]
+
+    choice = models.CharField(max_length=10, choices=[("one", "One"), ("two", "Two")])
+
+    foo = RevisionedForeignKey(
+        "testapp.ModelOnOtherEndOfRevisionedForeignKey", on_delete=models.CASCADE
+    )
 
 
 class SoftDeleted(RevisionModel):
