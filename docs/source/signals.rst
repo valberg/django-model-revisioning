@@ -1,7 +1,7 @@
 Signals
 =======
 
-Django Model History emits the following signals when dealing with revisions:
+django-model-revisioning emits the following signals when dealing with revisions:
 
 
 pre_revision

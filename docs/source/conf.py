@@ -55,7 +55,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "Django Model History"
+project = "Django Model Revisioning"
 copyright = "2019, Vidir Valberg Gudmundsson"
 
 # The version info for the project you're documenting, acts as replacement for
@@ -195,7 +195,7 @@ html_static_path = ["_static"]
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "DjangoModelHistorydoc"
+htmlhelp_basename = "DjangoModelRevisioningdoc"
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -215,8 +215,8 @@ latex_elements = {
 latex_documents = [
     (
         "index",
-        "DjangoModelHistory.tex",
-        "Django Model History Documentation",
+        "DjangoModelRevisioning.tex",
+        "Django Model Revisioning Documentation",
         "Vidir Valberg Gudmundsson",
         "manual",
     )
@@ -250,8 +250,8 @@ latex_documents = [
 man_pages = [
     (
         "index",
-        "djangomodelhistory",
-        "Django Model History Documentation",
+        "djangomodelrevisioning",
+        "Django Model Revisioning Documentation",
         ["Vidir Valberg Gudmundsson"],
         1,
     )
@@ -269,8 +269,8 @@ man_pages = [
 texinfo_documents = [
     (
         "index",
-        "DjangoDocBrown",
-        "Django Doc Brown Documentation",
+        "DjangoModelRevisioning",
+        "Django Model Revisioning Documentation",
         "Vidir Valberg Gudmundsson",
         "DjangoDocBrown",
         "One line description of project.",
