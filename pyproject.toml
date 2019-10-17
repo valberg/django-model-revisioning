@@ -9,6 +9,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
+django = "^2.2"
 
 [tool.poetry.dev-dependencies]
 codecov = "^2.0"
