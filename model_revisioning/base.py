@@ -28,6 +28,13 @@ class RevisionBase(ModelBase):
             key: val for key, val in attrs_copy.items() if not isinstance(val, Field)
         }
 
+        # If the model being revisioned inherits from an
+        # abstract model we have to copy the fields from that
+        for base in bases:
+            if hasattr(base, "_meta") and base._meta.abstract:
+                for field in base._meta.local_fields:
+                    attrs_copy[field.name] = deepcopy(field)
+
         revisioned_fields = {
             key: attrs_copy[key] for key in new_class._revisions.fields
         }

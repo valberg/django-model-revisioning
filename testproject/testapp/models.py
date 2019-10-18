@@ -87,5 +87,16 @@ class ModelWithoutOptions(RevisionModel):
     content = models.TextField()
 
 
+class SomeMixin(models.Model):
+    class Meta:
+        abstract = True
+
+    field_from_mixin = models.CharField(max_length=100)
+
+
+class ModelWithMixin(SomeMixin, RevisionModel):
+    non_mixin_field = models.CharField(max_length=100)
+
+
 class StringRelatedModel(RevisionModel):
     char = models.CharField(max_length=255, null=True, blank=True)
