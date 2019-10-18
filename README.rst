@@ -26,4 +26,4 @@ django-model-revisioning is currently not production ready - we need more tests 
 
 You can install the pre-release from PyPI though using::
 
-    $ pip install django-model-revisioning>=0.0.1-alpha
+    $ pip install django-model-revisioning

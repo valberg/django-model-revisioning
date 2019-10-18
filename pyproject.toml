@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-model-revisioning"
-version = "0.0.1-alpha2"
+version = "0.0.1a3"
 description = "Version control for django models."
 authors = ["Vidir Valberg Gudmundsson <valberg@orn.li>"]
 packages = [
@@ -10,6 +10,13 @@ repository = "https://github.com/valberg/django-model-revisioning"
 documentation = "https://django-model-revisioning.readthedocs.io"
 readme = "README.rst"
 license = "GPL-3.0+"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Django",
+    "Framework :: Django :: 2.2",
+    #"Framework :: Django :: 3.0",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"
