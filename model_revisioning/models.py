@@ -25,12 +25,14 @@ class Revision(models.Model):
 
     is_head = models.BooleanField(default=False)
 
+    note = models.CharField(max_length=255, null=True, blank=True)
+
     class Meta:
         abstract = True
         ordering = ["revision_at"]
 
-    def save(self, *args, **kwargs):
-        if kwargs.pop("remove_head", None):
+    def save(self, *args, remove_head=None, **kwargs):
+        if remove_head:
             self.is_head = False
         else:
             self.make_head()
@@ -106,9 +108,10 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
 
         return data
 
-    def create_revision(self, **kwargs):
+    def create_revision(self, note=None, **kwargs):
         """ Create revision for this instance.
 
+        :param note:
         :param kwargs: A dict of data to be used as the data for the revision.
                        (Optional)
         :return revision: The created revision.
@@ -121,7 +124,10 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
         signals.pre_revision.send(sender=self.__class__, instance=self)
 
         new_revision = self.revision_class(
-            original_object=self, parent_revision=self.current_revision, **data
+            original_object=self,
+            parent_revision=self.current_revision,
+            note=note,
+            **data,
         )
         new_revision.save(force_insert=True)
 
@@ -135,7 +141,8 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
         changing_head=False,
         soft_deletion=False,
         called_from_revision=False,
-        **kwargs
+        note=None,
+        **kwargs,
     ):
 
         if not changing_head:
@@ -145,7 +152,7 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
         super().save(*args, **kwargs)
 
         if not changing_head:
-            self.create_revision()
+            self.create_revision(note=note)
 
         # If this save is not called from a revision,
         # it means we have to do a "reverse save" on
@@ -156,7 +163,7 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
                     kwargs = {obj.remote_field.name: self}
                     related_objects = obj.related_model.objects.filter(**kwargs)
                     for related_object in related_objects:
-                        related_object.create_revision()
+                        related_object.create_revision(note=f"Created from {self}")
 
     def delete(self, using=None):
         if self._revisions.soft_deletion:

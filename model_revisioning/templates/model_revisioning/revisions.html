@@ -25,6 +25,7 @@
           <tr>
             <th scope="col">{% trans 'Date/time' %}</th>
             <th scope="col">{% trans 'Is head' %}</th>
+            <th scope="col">{% trans 'Note' %}</th>
             <th scope="col"></th>
           </tr>
           </thead>
@@ -33,6 +34,7 @@
             <tr {% if revision.is_head %}style="background-color: palegreen"{% endif %}>
               <th scope="row">{{ revision.revision_at|date:"DATETIME_FORMAT" }}</th>
               <td>{{ revision.is_head }}</td>
+              <td>{{ revision.note }}</td>
               <td width="200px">
                 <button class="button more" data-id="more-{{ revision.id }}"
                         onClick="django.jQuery('#more-{{ revision.id }}').toggle();">{% trans 'Show more' %}</button>

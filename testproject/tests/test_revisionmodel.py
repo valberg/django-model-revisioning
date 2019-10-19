@@ -245,3 +245,11 @@ def test_uniqueness_is_removed_from_revisions(db):
     # If uniqueness is not removed the following will fail with IntegrityError
     foo.unique_field = "test"
     foo.save()
+
+
+def test_note_on_revision(db):
+    foo = models.ModelOnOtherEndOfRevisionedForeignKey.objects.create(char="foo")
+    bar = models.ModelWithRevisionedForeignKey.objects.create(foo=foo)
+    foo.char = "trigger revision"
+    foo.save()
+    assert bar.current_revision.note == f"Created from {foo}"

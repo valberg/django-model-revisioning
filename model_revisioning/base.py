@@ -6,7 +6,7 @@ from django.db.models.base import ModelBase
 
 from .options import RevisionOptions
 
-excluded_field_names = ["original_object", "is_head", "parent_revision"]
+excluded_field_names = ["original_object", "is_head", "parent_revision", "note"]
 
 
 class RevisionBase(ModelBase):
