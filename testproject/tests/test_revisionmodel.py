@@ -252,4 +252,7 @@ def test_note_on_revision(db):
     bar = models.ModelWithRevisionedForeignKey.objects.create(foo=foo)
     foo.char = "trigger revision"
     foo.save()
-    assert bar.current_revision.note == f"Created from {foo}"
+    assert (
+        bar.current_revision.note.lower()
+        == f"created since {foo._meta.model_name} (pk: {foo.pk}) changed."
+    )

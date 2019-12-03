@@ -12,4 +12,4 @@ def revision_as_dict(obj):
 
 @register.simple_tag
 def get_attr(obj, attr):
-    return getattr(obj, attr, "<strong>N/A</strong>")
+    return getattr(obj, attr, "N/A")

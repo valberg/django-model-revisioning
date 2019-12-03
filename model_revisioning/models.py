@@ -163,7 +163,9 @@ class RevisionModel(models.Model, metaclass=RevisionBase):
                     kwargs = {obj.remote_field.name: self}
                     related_objects = obj.related_model.objects.filter(**kwargs)
                     for related_object in related_objects:
-                        related_object.create_revision(note=f"Created from {self}")
+                        related_object.create_revision(
+                            note=f"Created since {self.__class__.__name__} (pk: {self.pk}) changed."
+                        )
 
     def delete(self, using=None):
         if self._revisions.soft_deletion:
