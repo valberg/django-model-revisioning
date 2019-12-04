@@ -16,7 +16,7 @@ Add history to your models - migrations compatible!
 Supported versions
 ------------------
 
-- Python 3.6, 3.7, (3.8 soon)
+- Python 3.6, 3.7, 3.8
 - Django 2.2.x, 3.0.x
 
 Current state
