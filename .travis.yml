@@ -1,35 +1,18 @@
 language: python
-
 cache: pip
-
 python:
   - "3.6"
+  - "3.7"
+  - "3.8"
+
+env:
+  - DJANGO="2.2"
+  - DJANGO="3.0"
 
 install:
-  - pip install poetry==1.0.0b8 pytest pytest-cov pytest-django tox
+  - pip install poetry==1.0.0b8 tox-travis codecov
 
-script: tox -e $TOX_ENV
-
-matrix:
-  fast_finish: true
-  include:
-    # Python 3.6
-    - python: 3.6
-      env: TOX_ENV=django22-py36
-    - python: 3.6
-      env: TOX_ENV=django30-py36
-
-    # Python 3.7
-    - python: 3.7
-      env: TOX_ENV=django22-py37
-    - python: 3.7
-      env: TOX_ENV=django30-py37
-
-    # Python 3.8
-    - python: 3.8
-      env: TOX_ENV=django22-py38
-    - python: 3.8
-      env: TOX_ENV=django30-py38
+script: tox
 
 after_success:
-  - poetry run codecov
+  - codecov
