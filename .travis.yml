@@ -10,7 +10,7 @@ env:
   - DJANGO="3.0"
 
 install:
-  - pip install tox-travis codecov
+  - pip install tox-travis codecov poetry
 
 script: tox
 
