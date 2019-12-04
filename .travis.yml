@@ -5,10 +5,8 @@ cache: pip
 python:
   - "3.6"
 
-before_install:
-  - pip install poetry tox
 install:
-  - poetry install
+  - pip install poetry==1.0.0b8 pytest pytest-cov pytest-django tox
 
 script: tox -e $TOX_ENV
 
@@ -28,11 +26,10 @@ matrix:
       env: TOX_ENV=django30-py37
 
     # Python 3.8
-# Disabled for now until poetry has 3.8 support
-#    - python: 3.8
-#      env: TOX_ENV=django22-py38
-#    - python: 3.8
-#      env: TOX_ENV=django30-py38
+    - python: 3.8
+      env: TOX_ENV=django22-py38
+    - python: 3.8
+      env: TOX_ENV=django30-py38
 
 after_success:
   - poetry run codecov
