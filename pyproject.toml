@@ -26,10 +26,10 @@ django = ">=2.2,<4.0"
 codecov = "^2.0"
 coverage = "^4.5"
 pytest = "^5.2"
+pytest-cov = "^2.8"
 pytest-django = "^3.5"
 sphinx = "^2.2"
 sphinx-rtd-theme = "^0.4.3"
-pytest-cov = "^2.8"
 tox = "^3.14"
 
 [build-system]
