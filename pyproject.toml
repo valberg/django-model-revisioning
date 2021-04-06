@@ -29,7 +29,7 @@ pytest = "^5.3"
 pytest-cov = "^2.8"
 pytest-django = "^3.7"
 sphinx = "^2.2"
-sphinx-rtd-theme = "^0.4.3"
+sphinx-rtd-theme = "^0.5.2"
 tox = "^3.14"
 
 [build-system]
